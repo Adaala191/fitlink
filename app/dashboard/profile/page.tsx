@@ -49,7 +49,7 @@ export default function EditProfilePage() {
           "id, full_name, username, specialty, bio, instagram, phone, contact_email, image_url"
         )
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         setErrorMessage(error.message);
@@ -57,7 +57,13 @@ export default function EditProfilePage() {
         return;
       }
 
-      setProfile(data);
+      if (!data) {
+        setErrorMessage("No trainer profile found for this account.");
+        setLoading(false);
+        return;
+      }
+
+      setProfile(data as TrainerProfile);
       setLoading(false);
     }
 
@@ -67,10 +73,6 @@ export default function EditProfilePage() {
   function handleChange(
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
-    if (!profile) {
-      return;
-    }
-
     const { name, value } = event.target;
 
     setProfile((currentProfile) => {

@@ -85,8 +85,8 @@ export default function PackagesPage() {
         return;
       }
 
-      setProfile(profileData);
-      setPackages(packagesData || []);
+      setProfile(profileData as TrainerProfile);
+      setPackages((packagesData || []) as PackageItem[]);
       setLoading(false);
     }
 
@@ -149,7 +149,9 @@ export default function PackagesPage() {
       }
 
       setPackages((currentPackages) =>
-        currentPackages.map((pkg) => (pkg.id === editingId ? data : pkg))
+        currentPackages.map((pkg) =>
+          pkg.id === editingId ? (data as PackageItem) : pkg
+        )
       );
 
       setStatus("Package updated successfully.");
@@ -176,7 +178,7 @@ export default function PackagesPage() {
       return;
     }
 
-    setPackages((currentPackages) => [data, ...currentPackages]);
+    setPackages((currentPackages) => [data as PackageItem, ...currentPackages]);
     setStatus("Package added successfully.");
     resetForm();
   }
@@ -251,7 +253,9 @@ export default function PackagesPage() {
     }
 
     setPackages((currentPackages) =>
-      currentPackages.map((pkg) => (pkg.id === packageItem.id ? data : pkg))
+      currentPackages.map((pkg) =>
+        pkg.id === packageItem.id ? (data as PackageItem) : pkg
+      )
     );
 
     setStatus("Package visibility updated.");

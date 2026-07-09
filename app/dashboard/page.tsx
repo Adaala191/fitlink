@@ -155,6 +155,7 @@ export default function DashboardPage() {
           <div className="rounded-3xl bg-red-100 p-6 text-red-800 shadow-sm">
             <h1 className="text-xl font-bold">Dashboard error</h1>
             <p className="mt-2">{errorMessage}</p>
+
             <Link
               href="/login"
               className="mt-4 inline-block rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white"
@@ -172,11 +173,11 @@ export default function DashboardPage() {
   }
 
   const activePackagesCount = packages.filter(
-    (packageItem) => packageItem.is_active,
+    (packageItem) => packageItem.is_active
   ).length;
 
   const newRequestsCount = requests.filter(
-    (request) => request.status === "new",
+    (request) => request.status === "new"
   ).length;
 
   const publicLink = `http://localhost:3000/trainer/${profile.username}`;
