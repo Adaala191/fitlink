@@ -19,6 +19,7 @@ type TrainerProfile = {
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<TrainerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [status, setStatus] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -88,6 +89,83 @@ export default function EditProfilePage() {
 
     setStatus("");
     setErrorMessage("");
+  }
+
+  async function handleImageUpload(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    if (!profile) {
+      return;
+    }
+
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please upload an image file.");
+      return;
+    }
+
+    const maxSizeInMb = 5;
+    const maxSizeInBytes = maxSizeInMb * 1024 * 1024;
+
+    if (file.size > maxSizeInBytes) {
+      setErrorMessage("Image must be smaller than 5MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setStatus("Uploading image...");
+    setErrorMessage("");
+
+    const fileExtension = file.name.split(".").pop();
+    const fileName = `${profile.id}-${Date.now()}.${fileExtension}`;
+    const filePath = `${profile.id}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("trainer-images")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      setUploadingImage(false);
+      setStatus("");
+      setErrorMessage(uploadError.message);
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("trainer-images")
+      .getPublicUrl(filePath);
+
+    const newImageUrl = publicUrlData.publicUrl;
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        image_url: newImageUrl,
+      })
+      .eq("id", profile.id);
+
+    if (updateError) {
+      setUploadingImage(false);
+      setStatus("");
+      setErrorMessage(updateError.message);
+      return;
+    }
+
+    setProfile({
+      ...profile,
+      image_url: newImageUrl,
+    });
+
+    setUploadingImage(false);
+    setStatus("Profile image uploaded successfully.");
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -209,9 +287,23 @@ export default function EditProfilePage() {
                 className="h-40 w-40 rounded-3xl object-cover shadow-sm"
               />
 
-              <p className="mt-3 text-sm text-gray-500">
-                Image upload will be added later. For now, use an image URL.
-              </p>
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-semibold">
+                  Upload profile image
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                  className="block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-gray-950 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-gray-800"
+                />
+
+                <p className="mt-2 text-xs text-gray-500">
+                  JPG, PNG, or WebP. Max size 5MB.
+                </p>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="grid gap-4">
