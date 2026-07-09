@@ -180,7 +180,7 @@ export default function DashboardPage() {
     (request) => request.status === "new"
   ).length;
 
-  const publicLink = `http://localhost:3000/trainer/${profile.username}`;
+  const publicLink = `${window.location.origin}/trainer/${profile.username}`;
 
   return (
     <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
