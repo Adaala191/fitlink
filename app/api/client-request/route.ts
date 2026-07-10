@@ -103,6 +103,10 @@ export async function POST(request: Request) {
 
     const trainerEmail = trainer.contact_email;
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const dashboardRequestsUrl = `${appUrl}/dashboard/requests`;
+    const logoUrl = `${appUrl}/fitlink-logo.svg`;
+
     if (!trainerEmail) {
       return NextResponse.json({
         success: true,
@@ -118,29 +122,89 @@ export async function POST(request: Request) {
       subject: `New FitLink request from ${clientName}`,
       replyTo: clientEmail,
       html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <h2>New client request</h2>
-          <p>You received a new request on FitLink.</p>
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; background-color: #f7f5ef; padding: 24px;">
+          <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #e5e7eb;">
+            
+            <div style="padding: 24px 24px 12px 24px;">
+              <img
+                src="${logoUrl}"
+                alt="FitLink"
+                width="180"
+                style="display: block; max-width: 180px;"
+              />
+            </div>
 
-          <h3>Client Details</h3>
-          <p><strong>Name:</strong> ${clientName}</p>
-          <p><strong>Email:</strong> ${clientEmail}</p>
-          <p><strong>Phone:</strong> ${clientPhone || "Not provided"}</p>
+            <div style="padding: 12px 24px 24px 24px;">
+              <div style="background: #111827; border-radius: 18px; padding: 24px; color: #ffffff;">
+                <p style="margin: 0 0 8px 0; color: #93c5fd; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
+                  New client request
+                </p>
 
-          <h3>Selected Package</h3>
-          <p><strong>Package:</strong> ${selectedPackage.title}</p>
-          <p><strong>Price:</strong> ${selectedPackage.price}</p>
-          <p><strong>Duration:</strong> ${selectedPackage.duration}</p>
+                <h1 style="margin: 0; font-size: 26px; line-height: 1.2;">
+                  ${clientName} is interested in your coaching.
+                </h1>
 
-          <h3>Fitness Goal</h3>
-          <p>${fitnessGoal}</p>
+                <p style="margin: 14px 0 0 0; color: #d1d5db;">
+                  You received a new request on FitLink. Review the client details and follow up from your dashboard.
+                </p>
+              </div>
 
-          <h3>Message</h3>
-          <p>${message || "No message provided."}</p>
+              <div style="background: #f9fafb; border-radius: 16px; padding: 18px; margin-top: 18px;">
+                <h2 style="margin: 0 0 12px 0; color: #111827; font-size: 18px;">
+                  Client Details
+                </h2>
 
-          <p style="margin-top: 24px;">
-            Log in to your FitLink dashboard to manage this request.
-          </p>
+                <p style="margin: 6px 0;"><strong>Name:</strong> ${clientName}</p>
+                <p style="margin: 6px 0;"><strong>Email:</strong> ${clientEmail}</p>
+                <p style="margin: 6px 0;"><strong>Phone:</strong> ${
+                  clientPhone || "Not provided"
+                }</p>
+              </div>
+
+              <div style="background: #eff6ff; border-radius: 16px; padding: 18px; margin-top: 16px;">
+                <h2 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 18px;">
+                  Selected Package
+                </h2>
+
+                <p style="margin: 6px 0;"><strong>Package:</strong> ${
+                  selectedPackage.title
+                }</p>
+                <p style="margin: 6px 0;"><strong>Price:</strong> ${
+                  selectedPackage.price
+                }</p>
+                <p style="margin: 6px 0;"><strong>Duration:</strong> ${
+                  selectedPackage.duration
+                }</p>
+              </div>
+
+              <div style="background: #f0fdf4; border-radius: 16px; padding: 18px; margin-top: 16px;">
+                <h2 style="margin: 0 0 12px 0; color: #166534; font-size: 18px;">
+                  Fitness Goal
+                </h2>
+
+                <p style="margin: 0; color: #374151;">${fitnessGoal}</p>
+
+                <h2 style="margin: 18px 0 12px 0; color: #166534; font-size: 18px;">
+                  Message
+                </h2>
+
+                <p style="margin: 0; color: #374151;">
+                  ${message || "No message provided."}
+                </p>
+              </div>
+
+              <a
+                href="${dashboardRequestsUrl}"
+                style="display: inline-block; margin-top: 22px; background: #16a34a; color: #ffffff; padding: 14px 20px; border-radius: 14px; text-decoration: none; font-weight: 800;"
+              >
+                View request in dashboard
+              </a>
+
+              <p style="margin-top: 24px; color: #6b7280; font-size: 13px;">
+                This email was sent by FitLink. Train. Connect. Grow.
+              </p>
+            </div>
+          </div>
         </div>
       `,
     });
