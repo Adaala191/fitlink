@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import CopyLinkButton from "@/components/CopyLinkButton";
+import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
 
 type TrainerProfile = {
@@ -61,43 +62,12 @@ export default function DashboardPage() {
         return;
       }
 
-      let finalProfile = profileData;
-
-      if (!finalProfile) {
-        const metadata = user.user_metadata;
-
-        const cleanUsername =
-          metadata?.username ||
-          user.email?.split("@")[0]?.toLowerCase().replace(/\s+/g, "-") ||
-          `trainer-${user.id.slice(0, 8)}`;
-
-        const fullName = metadata?.full_name || "Fitness Coach";
-
-        const { data: createdProfile, error: createProfileError } =
-          await supabase
-            .from("profiles")
-            .insert({
-              id: user.id,
-              username: cleanUsername,
-              full_name: fullName,
-              specialty: "Fitness Coach",
-              bio: "Add your trainer bio here.",
-              instagram: "",
-              phone: "",
-              contact_email: user.email || "",
-              image_url:
-                "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=800&auto=format&fit=crop",
-            })
-            .select("id, username, full_name")
-            .single();
-
-        if (createProfileError) {
-          setErrorMessage(createProfileError.message);
-          setLoading(false);
-          return;
-        }
-
-        finalProfile = createdProfile;
+      if (!profileData) {
+        setErrorMessage(
+          "Your trainer profile was not found. Please go to the Profile page and complete your profile."
+        );
+        setLoading(false);
+        return;
       }
 
       const { data: packagesData, error: packagesError } = await supabase
@@ -122,8 +92,8 @@ export default function DashboardPage() {
         return;
       }
 
-      setProfile(finalProfile);
-      setPackages(packagesData || []);
+      setProfile(profileData as TrainerProfile);
+      setPackages((packagesData || []) as PackageItem[]);
       setRequests((requestsData || []) as ClientRequest[]);
       setLoading(false);
     }
@@ -131,45 +101,51 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  }
-
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-5xl">
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
             <p className="font-semibold">Loading dashboard...</p>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (errorMessage) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-5xl">
-          <div className="rounded-3xl bg-red-100 p-6 text-red-800 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl bg-red-100 p-6 text-red-800">
             <h1 className="text-xl font-bold">Dashboard error</h1>
             <p className="mt-2">{errorMessage}</p>
 
             <Link
-              href="/login"
+              href="/dashboard/profile"
               className="mt-4 inline-block rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white"
             >
-              Go to Login
+              Go to Profile
             </Link>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (!profile) {
-    return null;
+    return (
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
+            <h1 className="text-xl font-bold">No profile found</h1>
+            <p className="mt-2 text-gray-600">
+              Your profile has not loaded yet.
+            </p>
+          </div>
+        </section>
+      </DashboardLayout>
+    );
   }
 
   const activePackagesCount = packages.filter(
@@ -180,49 +156,29 @@ export default function DashboardPage() {
     (request) => request.status === "new"
   ).length;
 
-  const publicLink = `${window.location.origin}/trainer/${profile.username}`;
+  const publicPageUrl = `/trainer/${profile.username}`;
+  const publicLink = `${window.location.origin}${publicPageUrl}`;
 
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-      <section className="mx-auto max-w-5xl">
+    <DashboardLayout publicPageUrl={publicPageUrl}>
+      <section className="w-full">
         <div className="rounded-3xl bg-gray-950 p-6 text-white">
           <p className="text-sm font-semibold text-gray-300">
             FitLink Dashboard
           </p>
 
-          <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">
-                Welcome back, {profile.full_name}
-              </h1>
+          <h1 className="mt-2 text-3xl font-bold">
+            Welcome back, {profile.full_name}
+          </h1>
 
-              <p className="mt-2 max-w-2xl text-gray-300">
-                Manage your public trainer profile, packages, and client
-                requests from one simple place.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                href={`/trainer/${profile.username}`}
-                className="rounded-xl bg-white px-5 py-3 text-center font-semibold text-gray-950 transition hover:bg-gray-200"
-              >
-                View Public Page
-              </Link>
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-xl border border-gray-700 px-5 py-3 text-center font-semibold text-white transition hover:bg-gray-900"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
+          <p className="mt-2 max-w-2xl text-gray-300">
+            Manage your public trainer profile, packages, and client requests
+            from one simple place.
+          </p>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <p className="text-sm font-semibold text-gray-500">Profile</p>
             <h2 className="mt-2 text-2xl font-bold">Saved</h2>
             <p className="mt-2 text-sm text-gray-600">
@@ -230,7 +186,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <p className="text-sm font-semibold text-gray-500">Packages</p>
             <h2 className="mt-2 text-2xl font-bold">
               {activePackagesCount} Active
@@ -240,7 +196,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <p className="text-sm font-semibold text-gray-500">
               Client Requests
             </p>
@@ -251,7 +207,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
           <h2 className="text-xl font-bold">Your public FitLink</h2>
 
           <p className="mt-2 text-gray-600">
@@ -261,7 +217,6 @@ export default function DashboardPage() {
 
           <div className="mt-4 flex flex-col gap-3 rounded-xl border border-gray-200 p-4 md:flex-row md:items-center md:justify-between">
             <p className="break-all font-medium text-gray-700">{publicLink}</p>
-
             <CopyLinkButton link={publicLink} />
           </div>
         </div>
@@ -269,7 +224,7 @@ export default function DashboardPage() {
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <Link
             href="/dashboard/profile"
-            className="rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md"
+            className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:shadow-md"
           >
             <h2 className="text-xl font-bold">Edit Profile</h2>
             <p className="mt-2 text-gray-600">
@@ -279,7 +234,7 @@ export default function DashboardPage() {
 
           <Link
             href="/dashboard/packages"
-            className="rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md"
+            className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:shadow-md"
           >
             <h2 className="text-xl font-bold">Manage Packages</h2>
             <p className="mt-2 text-gray-600">
@@ -289,7 +244,7 @@ export default function DashboardPage() {
 
           <Link
             href="/dashboard/requests"
-            className="rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md"
+            className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:shadow-md"
           >
             <h2 className="text-xl font-bold">Client Requests</h2>
             <p className="mt-2 text-gray-600">
@@ -298,8 +253,8 @@ export default function DashboardPage() {
           </Link>
 
           <Link
-            href={`/trainer/${profile.username}`}
-            className="rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md"
+            href={publicPageUrl}
+            className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:shadow-md"
           >
             <h2 className="text-xl font-bold">Preview Public Page</h2>
             <p className="mt-2 text-gray-600">
@@ -308,6 +263,6 @@ export default function DashboardPage() {
           </Link>
         </div>
       </section>
-    </main>
+    </DashboardLayout>
   );
 }

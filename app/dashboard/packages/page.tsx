@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
 
 type TrainerProfile = {
@@ -263,21 +264,21 @@ export default function PackagesPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-5xl">
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
             <p className="font-semibold">Loading packages...</p>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (errorMessage && !profile) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-5xl">
-          <div className="rounded-3xl bg-red-100 p-6 text-red-800 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl bg-red-100 p-6 text-red-800">
             <h1 className="text-xl font-bold">Packages error</h1>
             <p className="mt-2">{errorMessage}</p>
 
@@ -289,169 +290,240 @@ export default function PackagesPage() {
             </Link>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (!profile) {
-    return null;
+    return (
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
+            <h1 className="text-xl font-bold">No profile found</h1>
+            <p className="mt-2 text-gray-600">
+              Your profile has not loaded yet.
+            </p>
+          </div>
+        </section>
+      </DashboardLayout>
+    );
   }
 
+  const publicPageUrl = `/trainer/${profile.username}`;
+  const activePackagesCount = packages.filter((pkg) => pkg.is_active).length;
+  const hiddenPackagesCount = packages.filter((pkg) => !pkg.is_active).length;
+
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-      <section className="mx-auto max-w-5xl">
-        <Link
-          href="/dashboard"
-          className="text-sm font-semibold text-gray-600 transition hover:text-gray-950"
-        >
-          ← Back to Dashboard
-        </Link>
+    <DashboardLayout publicPageUrl={publicPageUrl}>
+      <section className="w-full">
+        <div className="rounded-3xl bg-gray-950 p-6 text-white">
+          <p className="text-sm font-semibold text-gray-300">
+            Trainer Packages
+          </p>
 
-        <div className="mt-4 rounded-3xl bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-gray-500">
-                Trainer Packages
-              </p>
+          <h1 className="mt-1 text-3xl font-bold">Manage Packages</h1>
 
-              <h1 className="mt-1 text-3xl font-bold">Manage Packages</h1>
+          <p className="mt-2 max-w-2xl text-gray-300">
+            Add, edit, delete, or hide packages from your public FitLink page.
+          </p>
 
-              <p className="mt-2 text-gray-600">
-                Add, edit, delete, or hide packages from your public FitLink
-                page.
-              </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <span className="rounded-full bg-green-400/15 px-4 py-2 text-sm font-bold text-green-200">
+              {activePackagesCount} Active
+            </span>
+
+            <span className="rounded-full bg-gray-400/15 px-4 py-2 text-sm font-bold text-gray-200">
+              {hiddenPackagesCount} Hidden
+            </span>
+
+            {editingId && (
+              <span className="rounded-full bg-blue-400/15 px-4 py-2 text-sm font-bold text-blue-200">
+                Editing package
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+          <form
+            onSubmit={handleSubmit}
+            className={`rounded-3xl border p-6 ${
+              editingId
+                ? "border-blue-200 bg-blue-50"
+                : "border-gray-200 bg-white"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p
+                  className={`text-sm font-bold ${
+                    editingId ? "text-blue-700" : "text-gray-500"
+                  }`}
+                >
+                  {editingId ? "Edit mode" : "New package"}
+                </p>
+
+                <h2 className="mt-1 text-2xl font-bold">
+                  {editingId ? "Edit Package" : "Add New Package"}
+                </h2>
+              </div>
+
+              {editingId && (
+                <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                  Editing
+                </span>
+              )}
             </div>
 
-            <Link
-              href={`/trainer/${profile.username}`}
-              className="rounded-xl bg-gray-950 px-5 py-3 text-center font-semibold text-white transition hover:bg-gray-800"
-            >
-              Preview Public Page
-            </Link>
-          </div>
+            <div className="mt-5 grid gap-4">
+              <div>
+                <label className="mb-2 block text-sm font-semibold">
+                  Package title
+                </label>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-            <form onSubmit={handleSubmit} className="rounded-2xl bg-gray-50 p-5">
-              <h2 className="text-xl font-bold">
-                {editingId ? "Edit Package" : "Add New Package"}
-              </h2>
+                <input
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  type="text"
+                  required
+                  placeholder="8-Week Transformation"
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                />
+              </div>
 
-              <div className="mt-5 grid gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-semibold">
-                    Package title
+                    Price
                   </label>
 
                   <input
-                    name="title"
-                    value={formData.title}
+                    name="price"
+                    value={formData.price}
                     onChange={handleChange}
                     type="text"
                     required
-                    placeholder="8-Week Transformation"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+                    placeholder="$199"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
                   />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Price
-                    </label>
-
-                    <input
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      type="text"
-                      required
-                      placeholder="$199"
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Duration
-                    </label>
-
-                    <input
-                      name="duration"
-                      value={formData.duration}
-                      onChange={handleChange}
-                      type="text"
-                      required
-                      placeholder="8 weeks"
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-                    />
-                  </div>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold">
-                    Description
+                    Duration
                   </label>
 
-                  <textarea
-                    name="description"
-                    value={formData.description}
+                  <input
+                    name="duration"
+                    value={formData.duration}
                     onChange={handleChange}
-                    rows={5}
+                    type="text"
                     required
-                    placeholder="Describe what is included in this package."
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+                    placeholder="8 weeks"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
                   />
                 </div>
+              </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <button className="rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white transition hover:bg-gray-800">
-                    {editingId ? "Save Changes" : "Add Package"}
+              <div>
+                <label className="mb-2 block text-sm font-semibold">
+                  Description
+                </label>
+
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={5}
+                  required
+                  placeholder="Describe what is included in this package."
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  className={`rounded-xl px-5 py-3 font-semibold text-white transition ${
+                    editingId
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-gray-950 hover:bg-gray-800"
+                  }`}
+                >
+                  {editingId ? "Save Changes" : "Add Package"}
+                </button>
+
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition hover:bg-blue-50"
+                  >
+                    Cancel Edit
                   </button>
-
-                  {editingId && (
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="rounded-xl border border-gray-300 px-5 py-3 font-semibold text-gray-700 transition hover:bg-white"
-                    >
-                      Cancel Edit
-                    </button>
-                  )}
-                </div>
-
-                {status && (
-                  <p className="rounded-xl bg-green-100 px-4 py-3 text-sm font-medium text-green-800">
-                    {status}
-                  </p>
-                )}
-
-                {errorMessage && (
-                  <p className="rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
-                    {errorMessage}
-                  </p>
                 )}
               </div>
-            </form>
 
-            <div>
-              <h2 className="text-xl font-bold">Your Packages</h2>
+              {status && (
+                <p
+                  className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                    status.toLowerCase().includes("delete")
+                      ? "bg-red-100 text-red-800"
+                      : status.toLowerCase().includes("saving") ||
+                        status.toLowerCase().includes("adding") ||
+                        status.toLowerCase().includes("updating")
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
+                  {status}
+                </p>
+              )}
 
-              <div className="mt-4 grid gap-4">
-                {packages.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-gray-300 p-6 text-center">
-                    <p className="font-semibold">No packages yet</p>
-                    <p className="mt-1 text-sm text-gray-600">
-                      Add your first coaching package using the form.
-                    </p>
-                  </div>
-                ) : (
-                  packages.map((pkg) => (
+              {errorMessage && (
+                <p className="rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
+                  {errorMessage}
+                </p>
+              )}
+            </div>
+          </form>
+
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-gray-500">
+                  Package library
+                </p>
+
+                <h2 className="mt-1 text-2xl font-bold">Your Packages</h2>
+              </div>
+
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                {packages.length} Total
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              {packages.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-gray-300 p-8 text-center">
+                  <p className="font-semibold">No packages yet</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Add your first coaching package using the form.
+                  </p>
+                </div>
+              ) : (
+                packages.map((pkg) => {
+                  const isEditingThisPackage = editingId === pkg.id;
+
+                  return (
                     <div
                       key={pkg.id}
-                      className={`rounded-2xl border p-5 shadow-sm ${
-                        pkg.is_active
-                          ? "border-gray-200 bg-white"
-                          : "border-gray-200 bg-gray-100 opacity-70"
+                      className={`rounded-2xl border p-5 transition ${
+                        isEditingThisPackage
+                          ? "border-blue-300 bg-blue-50"
+                          : pkg.is_active
+                          ? "border-green-200 bg-white"
+                          : "border-gray-200 bg-gray-50 opacity-80"
                       }`}
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -460,7 +532,7 @@ export default function PackagesPage() {
                             <h3 className="text-lg font-bold">{pkg.title}</h3>
 
                             <span
-                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              className={`rounded-full px-3 py-1 text-xs font-bold ${
                                 pkg.is_active
                                   ? "bg-green-100 text-green-800"
                                   : "bg-gray-200 text-gray-700"
@@ -468,6 +540,12 @@ export default function PackagesPage() {
                             >
                               {pkg.is_active ? "Active" : "Hidden"}
                             </span>
+
+                            {isEditingThisPackage && (
+                              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                                Editing
+                              </span>
+                            )}
                           </div>
 
                           <p className="mt-1 text-sm text-gray-500">
@@ -478,7 +556,11 @@ export default function PackagesPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleActive(pkg)}
-                          className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold transition hover:bg-gray-50"
+                          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                            pkg.is_active
+                              ? "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                              : "bg-green-600 text-white hover:bg-green-700"
+                          }`}
                         >
                           {pkg.is_active ? "Hide" : "Show"}
                         </button>
@@ -492,7 +574,7 @@ export default function PackagesPage() {
                         <button
                           type="button"
                           onClick={() => handleEdit(pkg)}
-                          className="rounded-xl bg-gray-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+                          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                         >
                           Edit
                         </button>
@@ -506,13 +588,13 @@ export default function PackagesPage() {
                         </button>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
       </section>
-    </main>
+    </DashboardLayout>
   );
 }

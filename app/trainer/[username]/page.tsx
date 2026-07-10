@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import TrainerPublicContent from "@/components/TrainerPublicContent";
 import { supabase } from "@/lib/supabaseClient";
+import FitLinkLogo from "@/components/FitLinkLogo";
 
 type TrainerProfile = {
   id: string;
@@ -25,6 +27,9 @@ type PackageItem = {
   is_active: boolean;
 };
 
+const defaultTrainerImage =
+  "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=800&auto=format&fit=crop";
+
 export default function TrainerPage() {
   const params = useParams();
   const username = String(params.username);
@@ -43,7 +48,7 @@ export default function TrainerPage() {
         .from("profiles")
         .select("id, username, full_name, specialty, bio, instagram, image_url")
         .eq("username", username)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Profile error:", profileError);
@@ -73,8 +78,8 @@ export default function TrainerPage() {
         return;
       }
 
-      setTrainer(profileData);
-      setPackages(packagesData || []);
+      setTrainer(profileData as TrainerProfile);
+      setPackages((packagesData || []) as PackageItem[]);
       setLoading(false);
     }
 
@@ -83,9 +88,11 @@ export default function TrainerPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 px-3 py-4 text-gray-950">
-        <section className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-sm">
-          <p className="font-semibold">Loading trainer page...</p>
+      <main className="min-h-screen bg-white px-4 py-6 text-gray-950">
+        <section className="mx-auto max-w-6xl">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
+            <p className="font-semibold">Loading trainer page...</p>
+          </div>
         </section>
       </main>
     );
@@ -93,70 +100,157 @@ export default function TrainerPage() {
 
   if (errorMessage || !trainer) {
     return (
-      <main className="min-h-screen bg-gray-100 px-3 py-4 text-gray-950">
-        <section className="mx-auto max-w-3xl rounded-3xl bg-white p-6 text-center shadow-sm">
-          <h1 className="text-2xl font-bold">Trainer not found</h1>
+      <main className="min-h-screen bg-white px-4 py-6 text-gray-950">
+        <section className="mx-auto flex min-h-[80vh] max-w-3xl items-center justify-center">
+          <div className="w-full rounded-3xl border border-gray-200 bg-white p-8 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-2xl">
+              !
+            </div>
 
-          <p className="mt-2 text-gray-600">
-            This FitLink page does not exist or the username was changed.
-          </p>
+            <h1 className="mt-5 text-3xl font-black">Trainer not found</h1>
 
-          <Link
-            href="/"
-            className="mt-5 inline-block rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white transition hover:bg-gray-800"
-          >
-            Back Home
-          </Link>
+            <p className="mt-3 text-gray-600">
+              This FitLink page does not exist or the username was changed.
+            </p>
+
+            <Link
+              href="/"
+              className="mt-6 inline-block rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white transition hover:bg-gray-800"
+            >
+              Back Home
+            </Link>
+          </div>
         </section>
       </main>
     );
   }
 
-  return (
-    <main className="min-h-screen bg-gray-100 px-3 py-4 text-gray-950">
-      <section className="mx-auto max-w-3xl overflow-hidden rounded-3xl bg-white shadow-sm">
-        <div className="h-40 bg-gray-950" />
+  const trainerImage = trainer.image_url || defaultTrainerImage;
 
-        <div className="px-4 pb-6">
-          <img
-            src={
-              trainer.image_url ||
-              "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=800&auto=format&fit=crop"
-            }
-            alt={trainer.full_name}
-            className="-mt-20 h-36 w-36 rounded-3xl border-4 border-white object-cover shadow-md"
-          />
+return (
+  <main className="min-h-screen bg-white text-gray-950">
+    <section className="w-full px-3 py-3 md:px-4">
+      <div className="overflow-hidden rounded-[2rem] bg-gray-950 text-white">
+        <div className="relative p-6 md:p-8 lg:p-10">
+          <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-green-500/20 blur-3xl" />
 
-          <div className="mt-5">
-            {trainer.instagram && (
-              <p className="text-sm font-semibold text-gray-500">
-                {trainer.instagram}
-              </p>
-            )}
+          <div className="relative z-10">
+            <div className="inline-flex rounded-2xl bg-white p-3 shadow-sm">
+              <FitLinkLogo href="/" />
+            </div>
 
-            <h1 className="mt-1 text-3xl font-bold">{trainer.full_name}</h1>
+            <div className="mt-10 grid gap-8 lg:grid-cols-[220px_1fr] lg:items-center">
+              <div className="relative h-48 w-48 overflow-hidden rounded-[2rem] border-4 border-white/10 bg-gray-800 shadow-xl">
+                <Image
+                  src={trainerImage}
+                  alt={trainer.full_name}
+                  fill
+                  priority
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
 
-            <p className="mt-2 font-medium text-gray-700">
-              {trainer.specialty || "Fitness Coach"}
+              <div>
+                {trainer.instagram && (
+                  <p className="text-sm font-bold text-blue-300">
+                    {trainer.instagram}
+                  </p>
+                )}
+
+                <h1 className="mt-2 max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
+                  Train with {trainer.full_name}
+                </h1>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <span className="rounded-full bg-green-400/15 px-4 py-2 text-sm font-bold text-green-200">
+                    {trainer.specialty || "Fitness Coach"}
+                  </span>
+
+                  <span className="rounded-full bg-blue-400/15 px-4 py-2 text-sm font-bold text-blue-200">
+                    {packages.length} Available Packages
+                  </span>
+
+                  <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-gray-200">
+                    Accepting Requests
+                  </span>
+                </div>
+
+                <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-300">
+                  {trainer.bio || "This trainer has not added a bio yet."}
+                </p>
+
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <a
+                    href="#packages"
+                    className="rounded-2xl bg-blue-600 px-6 py-4 text-center font-black text-white transition hover:bg-blue-700"
+                  >
+                    View Packages
+                  </a>
+
+                  <a
+                    href="#request"
+                    className="rounded-2xl bg-green-500 px-6 py-4 text-center font-black text-gray-950 transition hover:bg-green-400"
+                  >
+                    Send Request
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-[2rem] border border-gray-200 bg-white p-5 md:p-7">
+        <div className="flex flex-col gap-3 border-b border-gray-200 pb-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
+              Coaching packages
             </p>
 
-            <p className="mt-4 leading-7 text-gray-600">
-              {trainer.bio || "This trainer has not added a bio yet."}
+            <h2 className="mt-2 text-3xl font-black tracking-tight">
+              Choose your package
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-gray-600">
+              Select the option that fits your goal, then send your request.
+              The trainer will contact you with the next steps.
             </p>
           </div>
 
-          {packages.length > 0 ? (
-            <TrainerPublicContent trainerId={trainer.id} packages={packages} />
-          ) : (
-            <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-6 text-center">
-              <h2 className="text-xl font-bold">No packages available yet</h2>
-              <p className="mt-2 text-gray-600">
-                This trainer has not published any active packages.
-              </p>
-            </div>
-          )}
+          <div className="rounded-2xl bg-gray-950 px-5 py-4 text-white">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+              Page status
+            </p>
+            <p className="mt-1 font-black text-green-300">
+              Live and accepting leads
+            </p>
+          </div>
         </div>
-      </section>
-    </main>
-  );
+
+        {packages.length > 0 ? (
+          <div id="packages">
+            <TrainerPublicContent trainerId={trainer.id} packages={packages} />
+          </div>
+        ) : (
+          <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
+            <h2 className="text-xl font-bold">No packages available yet</h2>
+
+            <p className="mt-2 text-gray-600">
+              This trainer has not published any active packages.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <footer className="px-2 py-6 text-center text-sm text-gray-500">
+        Powered by{" "}
+        <Link href="/" className="font-bold text-gray-950">
+          FitLink
+        </Link>
+      </footer>
+    </section>
+  </main>
+);
 }

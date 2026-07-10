@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
-import ProtectedPage from "@/components/ProtectedPage";
 
 type TrainerProfile = {
   id: string;
@@ -25,6 +25,42 @@ type ClientRequest = {
     title: string;
   }[];
 };
+
+function getStatusBadgeClass(status: ClientRequest["status"]) {
+  if (status === "new") {
+    return "bg-blue-100 text-blue-800";
+  }
+
+  if (status === "contacted") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  return "bg-green-100 text-green-800";
+}
+
+function getRequestCardClass(status: ClientRequest["status"]) {
+  if (status === "new") {
+    return "border-blue-200 bg-blue-50";
+  }
+
+  if (status === "contacted") {
+    return "border-amber-200 bg-amber-50";
+  }
+
+  return "border-green-200 bg-green-50";
+}
+
+function formatStatus(status: ClientRequest["status"]) {
+  if (status === "new") {
+    return "New";
+  }
+
+  if (status === "contacted") {
+    return "Contacted";
+  }
+
+  return "Closed";
+}
 
 export default function ClientRequestsPage() {
   const [profile, setProfile] = useState<TrainerProfile | null>(null);
@@ -100,7 +136,7 @@ export default function ClientRequestsPage() {
         return;
       }
 
-      setProfile(profileData);
+      setProfile(profileData as TrainerProfile);
       setRequests((requestsData || []) as ClientRequest[]);
       setLoading(false);
     }
@@ -177,27 +213,23 @@ export default function ClientRequestsPage() {
     setStatusMessage("Request deleted.");
   }
 
-  const newRequestsCount = requests.filter(
-    (request) => request.status === "new"
-  ).length;
-
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-5xl">
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
             <p className="font-semibold">Loading requests...</p>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (errorMessage && !profile) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-5xl">
-          <div className="rounded-3xl bg-red-100 p-6 text-red-800 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl bg-red-100 p-6 text-red-800">
             <h1 className="text-xl font-bold">Requests error</h1>
             <p className="mt-2">{errorMessage}</p>
 
@@ -209,67 +241,102 @@ export default function ClientRequestsPage() {
             </Link>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (!profile) {
-    return null;
+    return (
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
+            <h1 className="text-xl font-bold">No profile found</h1>
+            <p className="mt-2 text-gray-600">
+              Your profile has not loaded yet.
+            </p>
+          </div>
+        </section>
+      </DashboardLayout>
+    );
   }
 
+  const publicPageUrl = `/trainer/${profile.username}`;
+
+  const newRequestsCount = requests.filter(
+    (request) => request.status === "new"
+  ).length;
+
+  const contactedRequestsCount = requests.filter(
+    (request) => request.status === "contacted"
+  ).length;
+
+  const closedRequestsCount = requests.filter(
+    (request) => request.status === "closed"
+  ).length;
+
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-      <section className="mx-auto max-w-5xl">
-        <Link
-          href="/dashboard"
-          className="text-sm font-semibold text-gray-600 transition hover:text-gray-950"
-        >
-          ← Back to Dashboard
-        </Link>
+    <DashboardLayout publicPageUrl={publicPageUrl}>
+      <section className="w-full">
+        <div className="rounded-3xl bg-gray-950 p-6 text-white">
+          <p className="text-sm font-semibold text-gray-300">
+            Client Requests
+          </p>
 
-        <div className="mt-4 rounded-3xl bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h1 className="mt-1 text-3xl font-bold">Manage Requests</h1>
+
+          <p className="mt-2 max-w-2xl text-gray-300">
+            View leads from your public FitLink page and track who you already
+            contacted.
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <span className="rounded-full bg-blue-400/15 px-4 py-2 text-sm font-bold text-blue-200">
+              {newRequestsCount} New
+            </span>
+
+            <span className="rounded-full bg-amber-400/15 px-4 py-2 text-sm font-bold text-amber-200">
+              {contactedRequestsCount} Contacted
+            </span>
+
+            <span className="rounded-full bg-green-400/15 px-4 py-2 text-sm font-bold text-green-200">
+              {closedRequestsCount} Closed
+            </span>
+          </div>
+        </div>
+
+        {statusMessage && (
+          <p
+            className={`mt-6 rounded-xl px-4 py-3 text-sm font-medium ${
+              statusMessage.toLowerCase().includes("delet")
+                ? "bg-red-100 text-red-800"
+                : statusMessage.toLowerCase().includes("updating")
+                ? "bg-blue-100 text-blue-800"
+                : "bg-green-100 text-green-800"
+            }`}
+          >
+            {statusMessage}
+          </p>
+        )}
+
+        {errorMessage && (
+          <p className="mt-6 rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
+            {errorMessage}
+          </p>
+        )}
+
+        <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-gray-500">
-                Client Requests
-              </p>
-
-              <h1 className="mt-1 text-3xl font-bold">Manage Requests</h1>
-
-              <p className="mt-2 text-gray-600">
-                View leads from your public FitLink page and track who you
-                already contacted.
-              </p>
+              <p className="text-sm font-bold text-gray-500">Request inbox</p>
+              <h2 className="mt-1 text-2xl font-bold">All Requests</h2>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="rounded-2xl bg-gray-950 px-5 py-4 text-white">
-                <p className="text-sm text-gray-300">New requests</p>
-                <p className="mt-1 text-3xl font-bold">{newRequestsCount}</p>
-              </div>
-
-              <Link
-                href={`/trainer/${profile.username}`}
-                className="rounded-xl border border-gray-300 px-4 py-3 text-center text-sm font-semibold transition hover:bg-gray-50"
-              >
-                Open Public Page
-              </Link>
-            </div>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+              {requests.length} Total
+            </span>
           </div>
 
-          {statusMessage && (
-            <p className="mt-6 rounded-xl bg-green-100 px-4 py-3 text-sm font-medium text-green-800">
-              {statusMessage}
-            </p>
-          )}
-
-          {errorMessage && (
-            <p className="mt-6 rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
-              {errorMessage}
-            </p>
-          )}
-
-          <div className="mt-8 grid gap-4">
+          <div className="mt-5 grid gap-4">
             {requests.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-300 p-8 text-center">
                 <h2 className="text-xl font-bold">No requests yet</h2>
@@ -280,7 +347,7 @@ export default function ClientRequestsPage() {
                 </p>
 
                 <Link
-                  href={`/trainer/${profile.username}`}
+                  href={publicPageUrl}
                   className="mt-5 inline-block rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white transition hover:bg-gray-800"
                 >
                   Open Public Page
@@ -290,25 +357,23 @@ export default function ClientRequestsPage() {
               requests.map((request) => (
                 <div
                   key={request.id}
-                  className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+                  className={`rounded-2xl border p-5 transition ${getRequestCardClass(
+                    request.status
+                  )}`}
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-xl font-bold">
+                        <h3 className="text-xl font-bold">
                           {request.client_name}
-                        </h2>
+                        </h3>
 
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            request.status === "new"
-                              ? "bg-green-100 text-green-800"
-                              : request.status === "contacted"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-200 text-gray-700"
-                          }`}
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
+                            request.status
+                          )}`}
                         >
-                          {request.status}
+                          {formatStatus(request.status)}
                         </span>
                       </div>
 
@@ -325,7 +390,13 @@ export default function ClientRequestsPage() {
                           event.target.value as ClientRequest["status"]
                         )
                       }
-                      className="rounded-xl border border-gray-300 px-4 py-3 text-sm font-semibold outline-none focus:border-gray-950"
+                      className={`rounded-xl border px-4 py-3 text-sm font-semibold outline-none ${
+                        request.status === "new"
+                          ? "border-blue-300 bg-white text-blue-800 focus:border-blue-700"
+                          : request.status === "contacted"
+                          ? "border-amber-300 bg-white text-amber-800 focus:border-amber-700"
+                          : "border-green-300 bg-white text-green-800 focus:border-green-700"
+                      }`}
                     >
                       <option value="new">New</option>
                       <option value="contacted">Contacted</option>
@@ -334,7 +405,7 @@ export default function ClientRequestsPage() {
                   </div>
 
                   <div className="mt-5 grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl bg-gray-50 p-4">
+                    <div className="rounded-xl bg-white/80 p-4">
                       <p className="text-sm font-semibold text-gray-500">
                         Selected Package
                       </p>
@@ -344,7 +415,7 @@ export default function ClientRequestsPage() {
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-gray-50 p-4">
+                    <div className="rounded-xl bg-white/80 p-4">
                       <p className="text-sm font-semibold text-gray-500">
                         Fitness Goal
                       </p>
@@ -352,7 +423,7 @@ export default function ClientRequestsPage() {
                       <p className="mt-1 font-bold">{request.fitness_goal}</p>
                     </div>
 
-                    <div className="rounded-xl bg-gray-50 p-4">
+                    <div className="rounded-xl bg-white/80 p-4">
                       <p className="text-sm font-semibold text-gray-500">
                         Email
                       </p>
@@ -365,7 +436,7 @@ export default function ClientRequestsPage() {
                       </a>
                     </div>
 
-                    <div className="rounded-xl bg-gray-50 p-4">
+                    <div className="rounded-xl bg-white/80 p-4">
                       <p className="text-sm font-semibold text-gray-500">
                         Phone
                       </p>
@@ -383,7 +454,7 @@ export default function ClientRequestsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-xl bg-gray-50 p-4">
+                  <div className="mt-4 rounded-xl bg-white/80 p-4">
                     <p className="text-sm font-semibold text-gray-500">
                       Message
                     </p>
@@ -404,7 +475,7 @@ export default function ClientRequestsPage() {
                     {request.client_phone && (
                       <a
                         href={`tel:${request.client_phone}`}
-                        className="rounded-xl border border-gray-300 px-4 py-2 text-center text-sm font-semibold transition hover:bg-gray-50"
+                        className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold transition hover:bg-gray-50"
                       >
                         Call Client
                       </a>
@@ -413,7 +484,7 @@ export default function ClientRequestsPage() {
                     <button
                       type="button"
                       onClick={() => handleDelete(request.id)}
-                      className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+                      className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50"
                     >
                       Delete Request
                     </button>
@@ -424,6 +495,6 @@ export default function ClientRequestsPage() {
           </div>
         </div>
       </section>
-    </main>
+    </DashboardLayout>
   );
 }

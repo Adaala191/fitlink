@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
 
 type TrainerProfile = {
@@ -15,6 +17,9 @@ type TrainerProfile = {
   contact_email: string;
   image_url: string;
 };
+
+const defaultProfileImage =
+  "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=800&auto=format&fit=crop";
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<TrainerProfile | null>(null);
@@ -121,15 +126,21 @@ export default function EditProfilePage() {
     setStatus("Uploading image...");
     setErrorMessage("");
 
-    const fileExtension = file.name.split(".").pop();
-    const fileName = `${profile.id}-${Date.now()}.${fileExtension}`;
-    const filePath = `${profile.id}/${fileName}`;
+    const fileExtension =
+      file.type === "image/png"
+        ? "png"
+        : file.type === "image/webp"
+        ? "webp"
+        : "jpg";
+
+    const filePath = `${profile.id}/profile-${Date.now()}.${fileExtension}`;
 
     const { error: uploadError } = await supabase.storage
       .from("trainer-images")
       .upload(filePath, file, {
         cacheControl: "3600",
         upsert: true,
+        contentType: file.type,
       });
 
     if (uploadError) {
@@ -161,7 +172,7 @@ export default function EditProfilePage() {
 
     setProfile({
       ...profile,
-      image_url: newImageUrl,
+      image_url: `${newImageUrl}?t=${Date.now()}`,
     });
 
     setUploadingImage(false);
@@ -183,6 +194,8 @@ export default function EditProfilePage() {
       .trim()
       .replace(/\s+/g, "-");
 
+    const cleanImageUrl = profile.image_url.split("?")[0];
+
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -193,7 +206,7 @@ export default function EditProfilePage() {
         instagram: profile.instagram,
         phone: profile.phone,
         contact_email: profile.contact_email,
-        image_url: profile.image_url,
+        image_url: cleanImageUrl,
       })
       .eq("id", profile.id);
 
@@ -206,6 +219,7 @@ export default function EditProfilePage() {
     setProfile({
       ...profile,
       username: cleanUsername,
+      image_url: cleanImageUrl,
     });
 
     setStatus("Profile saved successfully.");
@@ -213,21 +227,21 @@ export default function EditProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-4xl">
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
             <p className="font-semibold">Loading profile...</p>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (errorMessage && !profile) {
     return (
-      <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-        <section className="mx-auto max-w-4xl">
-          <div className="rounded-3xl bg-red-100 p-6 text-red-800 shadow-sm">
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl bg-red-100 p-6 text-red-800">
             <h1 className="text-xl font-bold">Profile error</h1>
             <p className="mt-2">{errorMessage}</p>
 
@@ -239,55 +253,58 @@ export default function EditProfilePage() {
             </Link>
           </div>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
   if (!profile) {
-    return null;
+    return (
+      <DashboardLayout>
+        <section className="w-full">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6">
+            <h1 className="text-xl font-bold">No profile found</h1>
+            <p className="mt-2 text-gray-600">
+              Your profile has not loaded yet.
+            </p>
+          </div>
+        </section>
+      </DashboardLayout>
+    );
   }
 
+  const publicPageUrl = `/trainer/${profile.username}`;
+  const profileImage = profile.image_url || defaultProfileImage;
+
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-6 text-gray-950">
-      <section className="mx-auto max-w-4xl">
-        <Link
-          href="/dashboard"
-          className="text-sm font-semibold text-gray-600 transition hover:text-gray-950"
-        >
-          ← Back to Dashboard
-        </Link>
+    <DashboardLayout publicPageUrl={publicPageUrl}>
+      <section className="w-full">
+        <div className="rounded-3xl bg-gray-950 p-6 text-white">
+          <p className="text-sm font-semibold text-gray-300">
+            Trainer Profile
+          </p>
 
-        <div className="mt-4 rounded-3xl bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h1 className="mt-1 text-3xl font-bold">Edit Profile</h1>
+
+          <p className="mt-2 max-w-2xl text-gray-300">
+            Update the information clients see on your public FitLink page.
+          </p>
+        </div>
+
+        <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-6">
+          <div className="grid gap-8 xl:grid-cols-[260px_1fr]">
             <div>
-              <p className="text-sm font-semibold text-gray-500">
-                Trainer Profile
-              </p>
+              <div className="relative h-44 w-44 overflow-hidden rounded-3xl bg-gray-100">
+                <Image
+                  src={profileImage}
+                  alt={profile.full_name || "Trainer profile"}
+                  fill
+                  priority
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
 
-              <h1 className="mt-1 text-3xl font-bold">Edit Profile</h1>
-
-              <p className="mt-2 text-gray-600">
-                This information appears on your public FitLink page.
-              </p>
-            </div>
-
-            <Link
-              href={`/trainer/${profile.username}`}
-              className="rounded-xl bg-gray-950 px-5 py-3 text-center font-semibold text-white transition hover:bg-gray-800"
-            >
-              Preview Page
-            </Link>
-          </div>
-
-          <div className="mt-8 grid gap-8 md:grid-cols-[220px_1fr]">
-            <div>
-              <img
-                src={profile.image_url}
-                alt={profile.full_name}
-                className="h-40 w-40 rounded-3xl object-cover shadow-sm"
-              />
-
-              <div className="mt-4">
+              <div className="mt-5">
                 <label className="mb-2 block text-sm font-semibold">
                   Upload profile image
                 </label>
@@ -297,7 +314,7 @@ export default function EditProfilePage() {
                   accept="image/*"
                   onChange={handleImageUpload}
                   disabled={uploadingImage}
-                  className="block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-gray-950 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-gray-800"
+                  className="block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-gray-950 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-gray-800 disabled:opacity-60"
                 />
 
                 <p className="mt-2 text-xs text-gray-500">
@@ -455,6 +472,6 @@ export default function EditProfilePage() {
           </div>
         </div>
       </section>
-    </main>
+    </DashboardLayout>
   );
 }
