@@ -28,9 +28,9 @@ const navItems = [
     href: "/dashboard/requests",
   },
   {
-  label: "Settings",
-  href: "/dashboard/settings",
-},
+    label: "Settings",
+    href: "/dashboard/settings",
+  },
 ];
 
 export default function DashboardLayout({
@@ -102,8 +102,49 @@ export default function DashboardLayout({
         </aside>
 
         <section className="min-w-0 flex-1 bg-white p-2 md:p-4">
-          <div className="mb-4 rounded-2xl bg-gray-950 p-4 text-white lg:hidden">
-            <FitLinkLogo href="/dashboard" />
+          <div className="mb-4 rounded-[1.5rem] bg-gray-950 p-4 text-white lg:hidden">
+            <div className="rounded-2xl bg-white p-3">
+              <FitLinkLogo href="/dashboard" />
+            </div>
+
+            <nav className="mt-4 grid grid-cols-2 gap-2">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`rounded-2xl px-3 py-3 text-center text-sm font-bold transition ${
+                      isActive
+                        ? "bg-white text-gray-950"
+                        : "bg-white/10 text-gray-200 hover:bg-white/15 hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-3 grid gap-2">
+              {publicPageUrl && (
+                <Link
+                  href={publicPageUrl}
+                  className="rounded-2xl border border-blue-400/30 bg-blue-400/10 px-3 py-3 text-center text-sm font-bold text-blue-100 transition hover:bg-blue-400/20"
+                >
+                  View Public Page
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-2xl border border-green-400/30 bg-green-400/10 px-3 py-3 text-sm font-bold text-green-100 transition hover:bg-green-400/20"
+              >
+                Log Out
+              </button>
+            </div>
           </div>
 
           {children}
