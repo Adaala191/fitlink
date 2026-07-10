@@ -27,6 +27,10 @@ const navItems = [
     label: "Requests",
     href: "/dashboard/requests",
   },
+  {
+  label: "Settings",
+  href: "/dashboard/settings",
+},
 ];
 
 export default function DashboardLayout({

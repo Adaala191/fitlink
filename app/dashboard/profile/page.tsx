@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
+import { validateUsername } from "@/lib/username";
 
 type TrainerProfile = {
   id: string;
@@ -13,6 +14,8 @@ type TrainerProfile = {
   specialty: string;
   bio: string;
   instagram: string;
+  tiktok: string;
+  whatsapp: string;
   phone: string;
   contact_email: string;
   image_url: string;
@@ -49,10 +52,11 @@ export default function EditProfilePage() {
         return;
       }
 
+      // Load everything the trainer can edit on their public page.
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "id, full_name, username, specialty, bio, instagram, phone, contact_email, image_url"
+          "id, full_name, username, specialty, bio, instagram, tiktok, whatsapp, phone, contact_email, image_url",
         )
         .eq("id", user.id)
         .maybeSingle();
@@ -77,7 +81,7 @@ export default function EditProfilePage() {
   }, []);
 
   function handleChange(
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
     const { name, value } = event.target;
 
@@ -96,9 +100,7 @@ export default function EditProfilePage() {
     setErrorMessage("");
   }
 
-  async function handleImageUpload(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
     if (!profile) {
       return;
     }
@@ -130,8 +132,8 @@ export default function EditProfilePage() {
       file.type === "image/png"
         ? "png"
         : file.type === "image/webp"
-        ? "webp"
-        : "jpg";
+          ? "webp"
+          : "jpg";
 
     const filePath = `${profile.id}/profile-${Date.now()}.${fileExtension}`;
 
@@ -156,6 +158,7 @@ export default function EditProfilePage() {
 
     const newImageUrl = publicUrlData.publicUrl;
 
+    // Save the image immediately so the trainer does not lose it if they leave the page.
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -189,10 +192,15 @@ export default function EditProfilePage() {
     setStatus("Saving profile...");
     setErrorMessage("");
 
-    const cleanUsername = profile.username
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-");
+    const usernameValidation = validateUsername(profile.username);
+
+    if (!usernameValidation.isValid) {
+      setStatus("");
+      setErrorMessage(usernameValidation.error);
+      return;
+    }
+
+    const cleanUsername = usernameValidation.username;
 
     const cleanImageUrl = profile.image_url.split("?")[0];
 
@@ -204,6 +212,8 @@ export default function EditProfilePage() {
         specialty: profile.specialty,
         bio: profile.bio,
         instagram: profile.instagram,
+        tiktok: profile.tiktok,
+        whatsapp: profile.whatsapp,
         phone: profile.phone,
         contact_email: profile.contact_email,
         image_url: cleanImageUrl,
@@ -279,9 +289,7 @@ export default function EditProfilePage() {
     <DashboardLayout publicPageUrl={publicPageUrl}>
       <section className="w-full">
         <div className="rounded-3xl bg-gray-950 p-6 text-white">
-          <p className="text-sm font-semibold text-gray-300">
-            Trainer Profile
-          </p>
+          <p className="text-sm font-semibold text-gray-300">Trainer Profile</p>
 
           <h1 className="mt-1 text-3xl font-bold">Edit Profile</h1>
 
@@ -370,7 +378,12 @@ export default function EditProfilePage() {
                   />
 
                   <p className="mt-1 text-xs text-gray-500">
-                    Your link: /trainer/{profile.username}
+                    Your link: /trainer/{profile.username || "your-username"}
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Use lowercase letters, numbers, and hyphens only. Example:
+                    abdalla-fitness
                   </p>
                 </div>
               </div>
@@ -405,51 +418,106 @@ export default function EditProfilePage() {
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold">
-                    Instagram
-                  </label>
+              <div className="rounded-3xl border border-gray-200 bg-gray-50 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
+                      Social links
+                    </p>
+                    <h2 className="mt-1 text-xl font-bold">
+                      Public contact buttons
+                    </h2>
+                  </div>
 
-                  <input
-                    name="instagram"
-                    value={profile.instagram || ""}
-                    onChange={handleChange}
-                    type="text"
-                    placeholder="@username"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-                  />
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
+                    Optional
+                  </span>
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold">
-                    Phone
-                  </label>
+                <p className="mt-2 text-sm text-gray-600">
+                  These links appear as buttons on your public trainer page.
+                </p>
 
-                  <input
-                    name="phone"
-                    value={profile.phone || ""}
-                    onChange={handleChange}
-                    type="tel"
-                    placeholder="+1 647 000 0000"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-                  />
-                </div>
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Instagram
+                    </label>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold">
-                    Contact email
-                  </label>
+                    <input
+                      name="instagram"
+                      value={profile.instagram || ""}
+                      onChange={handleChange}
+                      type="text"
+                      placeholder="@username"
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                    />
+                  </div>
 
-                  <input
-                    name="contact_email"
-                    value={profile.contact_email || ""}
-                    onChange={handleChange}
-                    type="email"
-                    required
-                    placeholder="trainer@email.com"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
-                  />
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      TikTok
+                    </label>
+
+                    <input
+                      name="tiktok"
+                      value={profile.tiktok || ""}
+                      onChange={handleChange}
+                      type="text"
+                      placeholder="@username"
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      WhatsApp
+                    </label>
+
+                    <input
+                      name="whatsapp"
+                      value={profile.whatsapp || ""}
+                      onChange={handleChange}
+                      type="tel"
+                      placeholder="+16470000000"
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                    />
+
+                    <p className="mt-1 text-xs text-gray-500">
+                      Use country code, for example +16470000000.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Phone
+                    </label>
+
+                    <input
+                      name="phone"
+                      value={profile.phone || ""}
+                      onChange={handleChange}
+                      type="tel"
+                      placeholder="+1 647 000 0000"
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-sm font-semibold">
+                      Contact email
+                    </label>
+
+                    <input
+                      name="contact_email"
+                      value={profile.contact_email || ""}
+                      onChange={handleChange}
+                      type="email"
+                      required
+                      placeholder="trainer@email.com"
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                    />
+                  </div>
                 </div>
               </div>
 

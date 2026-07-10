@@ -5,8 +5,8 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import TrainerPublicContent from "@/components/TrainerPublicContent";
-import { supabase } from "@/lib/supabaseClient";
 import FitLinkLogo from "@/components/FitLinkLogo";
+import { supabase } from "@/lib/supabaseClient";
 
 type TrainerProfile = {
   id: string;
@@ -15,6 +15,10 @@ type TrainerProfile = {
   specialty: string | null;
   bio: string | null;
   instagram: string | null;
+  tiktok: string | null;
+  whatsapp: string | null;
+  phone: string | null;
+  contact_email: string | null;
   image_url: string | null;
 };
 
@@ -30,6 +34,16 @@ type PackageItem = {
 const defaultTrainerImage =
   "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=800&auto=format&fit=crop";
 
+// Removes @ from usernames so links work whether the trainer types @name or name.
+function cleanUsername(value: string) {
+  return value.replace("@", "").trim();
+}
+
+// WhatsApp links need only numbers and an optional + sign.
+function cleanPhone(value: string) {
+  return value.replace(/[^\d+]/g, "");
+}
+
 export default function TrainerPage() {
   const params = useParams();
   const username = String(params.username);
@@ -44,9 +58,12 @@ export default function TrainerPage() {
       setLoading(true);
       setErrorMessage("");
 
+      // First we load the trainer profile from the public username in the URL.
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, username, full_name, specialty, bio, instagram, image_url")
+        .select(
+          "id, username, full_name, specialty, bio, instagram, tiktok, whatsapp, phone, contact_email, image_url"
+        )
         .eq("username", username)
         .maybeSingle();
 
@@ -65,6 +82,7 @@ export default function TrainerPage() {
         return;
       }
 
+      // Only active packages should show on the public page.
       const { data: packagesData, error: packagesError } = await supabase
         .from("packages")
         .select("id, title, price, duration, description, is_active")
@@ -127,130 +145,188 @@ export default function TrainerPage() {
 
   const trainerImage = trainer.image_url || defaultTrainerImage;
 
-return (
-  <main className="min-h-screen bg-white text-gray-950">
-    <section className="w-full px-3 py-3 md:px-4">
-      <div className="overflow-hidden rounded-[2rem] bg-gray-950 text-white">
-        <div className="relative p-6 md:p-8 lg:p-10">
-          <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-green-500/20 blur-3xl" />
+  return (
+    <main className="min-h-screen bg-white text-gray-950">
+      <section className="w-full px-3 py-3 md:px-4">
+        <div className="overflow-hidden rounded-[2rem] bg-gray-950 text-white">
+          <div className="relative p-6 md:p-8 lg:p-10">
+            <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+            <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-green-500/20 blur-3xl" />
 
-          <div className="relative z-10">
-            <div className="inline-flex rounded-2xl bg-white p-3 shadow-sm">
-              <FitLinkLogo href="/" />
-            </div>
-
-            <div className="mt-10 grid gap-8 lg:grid-cols-[220px_1fr] lg:items-center">
-              <div className="relative h-48 w-48 overflow-hidden rounded-[2rem] border-4 border-white/10 bg-gray-800 shadow-xl">
-                <Image
-                  src={trainerImage}
-                  alt={trainer.full_name}
-                  fill
-                  priority
-                  unoptimized
-                  className="object-cover"
-                />
+            <div className="relative z-10">
+              <div className="inline-flex rounded-2xl bg-white p-3 shadow-sm">
+                <FitLinkLogo href="/" />
               </div>
 
-              <div>
-                {trainer.instagram && (
-                  <p className="text-sm font-bold text-blue-300">
-                    {trainer.instagram}
+              <div className="mt-10 grid gap-8 lg:grid-cols-[220px_1fr] lg:items-center">
+                <div className="relative h-48 w-48 overflow-hidden rounded-[2rem] border-4 border-white/10 bg-gray-800 shadow-xl">
+                  <Image
+                    src={trainerImage}
+                    alt={trainer.full_name}
+                    fill
+                    priority
+                    unoptimized
+                    className="object-cover"
+                  />
+                </div>
+
+                <div>
+                  <h1 className="mt-2 max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
+                    Train with {trainer.full_name}
+                  </h1>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <span className="rounded-full bg-green-400/15 px-4 py-2 text-sm font-bold text-green-200">
+                      {trainer.specialty || "Fitness Coach"}
+                    </span>
+
+                    <span className="rounded-full bg-blue-400/15 px-4 py-2 text-sm font-bold text-blue-200">
+                      {packages.length} Available Packages
+                    </span>
+
+                    <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-gray-200">
+                      Accepting Requests
+                    </span>
+                  </div>
+
+                  <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-300">
+                    {trainer.bio || "This trainer has not added a bio yet."}
                   </p>
-                )}
 
-                <h1 className="mt-2 max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
-                  Train with {trainer.full_name}
-                </h1>
+                  {/* Main actions for clients: choose a package, send a request, or contact the trainer directly. */}
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <a
+                      href="#packages"
+                      className="rounded-2xl bg-blue-600 px-6 py-4 text-center font-black text-white transition hover:bg-blue-700"
+                    >
+                      View Packages
+                    </a>
 
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <span className="rounded-full bg-green-400/15 px-4 py-2 text-sm font-bold text-green-200">
-                    {trainer.specialty || "Fitness Coach"}
-                  </span>
+                    <a
+                      href="#request"
+                      className="rounded-2xl bg-green-500 px-6 py-4 text-center font-black text-gray-950 transition hover:bg-green-400"
+                    >
+                      Send Request
+                    </a>
 
-                  <span className="rounded-full bg-blue-400/15 px-4 py-2 text-sm font-bold text-blue-200">
-                    {packages.length} Available Packages
-                  </span>
+                    {trainer.instagram && (
+                      <a
+                        href={`https://instagram.com/${cleanUsername(
+                          trainer.instagram
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-pink-400/30 bg-pink-400/10 px-6 py-4 font-black text-pink-100 transition hover:bg-pink-400/20"
+                      >
+                        <span>◎</span>
+                        Instagram
+                      </a>
+                    )}
 
-                  <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-gray-200">
-                    Accepting Requests
-                  </span>
-                </div>
+                    {trainer.tiktok && (
+                      <a
+                        href={`https://www.tiktok.com/@${cleanUsername(
+                          trainer.tiktok
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 font-black text-white transition hover:bg-white/15"
+                      >
+                        <span>♪</span>
+                        TikTok
+                      </a>
+                    )}
 
-                <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-300">
-                  {trainer.bio || "This trainer has not added a bio yet."}
-                </p>
+                    {trainer.whatsapp && (
+                      <a
+                        href={`https://wa.me/${cleanPhone(trainer.whatsapp)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-green-400/30 bg-green-400/10 px-6 py-4 font-black text-green-200 transition hover:bg-green-400/20"
+                      >
+                        <span>☘</span>
+                        WhatsApp
+                      </a>
+                    )}
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <a
-                    href="#packages"
-                    className="rounded-2xl bg-blue-600 px-6 py-4 text-center font-black text-white transition hover:bg-blue-700"
-                  >
-                    View Packages
-                  </a>
+                    {trainer.phone && (
+                      <a
+                        href={`tel:${trainer.phone}`}
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-400/30 bg-blue-400/10 px-6 py-4 font-black text-blue-200 transition hover:bg-blue-400/20"
+                      >
+                        <span>☎</span>
+                        Call
+                      </a>
+                    )}
 
-                  <a
-                    href="#request"
-                    className="rounded-2xl bg-green-500 px-6 py-4 text-center font-black text-gray-950 transition hover:bg-green-400"
-                  >
-                    Send Request
-                  </a>
+                    {trainer.contact_email && (
+                      <a
+                        href={`mailto:${trainer.contact_email}`}
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 font-black text-white transition hover:bg-white/15"
+                      >
+                        <span>✉</span>
+                        Email
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-4 rounded-[2rem] border border-gray-200 bg-white p-5 md:p-7">
-        <div className="flex flex-col gap-3 border-b border-gray-200 pb-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
-              Coaching packages
-            </p>
+        <div className="mt-4 rounded-[2rem] border border-gray-200 bg-white p-5 md:p-7">
+          <div className="flex flex-col gap-3 border-b border-gray-200 pb-6 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
+                Coaching packages
+              </p>
 
-            <h2 className="mt-2 text-3xl font-black tracking-tight">
-              Choose your package
-            </h2>
+              <h2 className="mt-2 text-3xl font-black tracking-tight">
+                Choose your package
+              </h2>
 
-            <p className="mt-2 max-w-2xl text-gray-600">
-              Select the option that fits your goal, then send your request.
-              The trainer will contact you with the next steps.
-            </p>
+              <p className="mt-2 max-w-2xl text-gray-600">
+                Select the option that fits your goal, then send your request.
+                The trainer will contact you with the next steps.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-gray-950 px-5 py-4 text-white">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+                Page status
+              </p>
+              <p className="mt-1 font-black text-green-300">
+                Live and accepting leads
+              </p>
+            </div>
           </div>
 
-          <div className="rounded-2xl bg-gray-950 px-5 py-4 text-white">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
-              Page status
-            </p>
-            <p className="mt-1 font-black text-green-300">
-              Live and accepting leads
-            </p>
-          </div>
+          {packages.length > 0 ? (
+            <div id="packages">
+              <TrainerPublicContent
+                trainerId={trainer.id}
+                packages={packages}
+              />
+            </div>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
+              <h2 className="text-xl font-bold">No packages available yet</h2>
+
+              <p className="mt-2 text-gray-600">
+                This trainer has not published any active packages.
+              </p>
+            </div>
+          )}
         </div>
 
-        {packages.length > 0 ? (
-          <div id="packages">
-            <TrainerPublicContent trainerId={trainer.id} packages={packages} />
-          </div>
-        ) : (
-          <div className="mt-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
-            <h2 className="text-xl font-bold">No packages available yet</h2>
-
-            <p className="mt-2 text-gray-600">
-              This trainer has not published any active packages.
-            </p>
-          </div>
-        )}
-      </div>
-
-      <footer className="px-2 py-6 text-center text-sm text-gray-500">
-        Powered by{" "}
-        <Link href="/" className="font-bold text-gray-950">
-          FitLink
-        </Link>
-      </footer>
-    </section>
-  </main>
-);
+        <footer className="px-2 py-6 text-center text-sm text-gray-500">
+          Powered by{" "}
+          <Link href="/" className="font-bold text-gray-950">
+            FitLink
+          </Link>
+        </footer>
+      </section>
+    </main>
+  );
 }

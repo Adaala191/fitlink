@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import FitLinkLogo from "@/components/FitLinkLogo";
+import { validateUsername } from "@/lib/username";
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -28,47 +29,73 @@ export default function SignupPage() {
     setErrorMessage("");
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
 
-    setStatus("Creating account...");
-    setErrorMessage("");
+  setStatus("Creating account...");
+  setErrorMessage("");
 
-    const cleanEmail = formData.email.trim().toLowerCase();
+  const usernameValidation = validateUsername(formData.username);
 
-    const cleanUsername = formData.username
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-");
-
-    const { error } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.fullName,
-          username: cleanUsername,
-        },
-      },
-    });
-
-    if (error) {
-      setStatus("");
-      setErrorMessage(error.message);
-      return;
-    }
-
-    setStatus(
-      "Account created. Please check your email and confirm your account before logging in.",
-    );
-
-    setFormData({
-      fullName: "",
-      username: "",
-      email: "",
-      password: "",
-    });
+  if (!usernameValidation.isValid) {
+    setStatus("");
+    setErrorMessage(usernameValidation.error);
+    return;
   }
+
+  const cleanUsername = usernameValidation.username;
+  const cleanEmail = formData.email.trim().toLowerCase();
+
+  const emailCheckResponse = await fetch("/api/check-email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: cleanEmail,
+    }),
+  });
+
+  const emailCheckData = await emailCheckResponse.json();
+
+  if (emailCheckData.exists) {
+    setStatus("");
+    setErrorMessage("Email already exists.");
+    return;
+  }
+
+  if (!emailCheckResponse.ok) {
+    setStatus("");
+    setErrorMessage(emailCheckData.error || "Could not check email.");
+    return;
+  }
+
+  const { error } = await supabase.auth.signUp({
+    email: cleanEmail,
+    password: formData.password,
+    options: {
+      data: {
+        full_name: formData.fullName.trim(),
+        username: cleanUsername,
+      },
+    },
+  });
+
+  if (error) {
+    setStatus("");
+    setErrorMessage(error.message);
+    return;
+  }
+
+  setStatus("Account created. Please check your email and confirm your account.");
+
+  setFormData({
+    fullName: "",
+    username: "",
+    email: "",
+    password: "",
+  });
+}
 
   return (
     <main className="min-h-screen bg-white p-2 text-gray-950 md:p-3 lg:p-4">
@@ -185,7 +212,13 @@ export default function SignupPage() {
                 />
 
                 <p className="mt-1 text-xs text-gray-500">
-                  Your public link will be /trainer/your-username
+                  Use lowercase letters, numbers, and hyphens only. Example:
+                  abdalla-fitness
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Your public link will be /trainer/
+                  {formData.username || "your-username"}
                 </p>
               </div>
 
