@@ -105,7 +105,7 @@ export async function POST(request: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const dashboardRequestsUrl = `${appUrl}/dashboard/requests`;
-    const logoUrl = `${appUrl}/fitlink-logo.svg`;
+    const logoUrl = `${appUrl}/fitlink-logo-email.png`;
 
     if (!trainerEmail) {
       return NextResponse.json({
