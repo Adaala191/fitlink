@@ -91,12 +91,16 @@ export default function SettingsPage() {
     setSupportStatus("");
     setSupportError("");
 
-    // Support messages are saved in Supabase so the admin can review them later.
+    const senderName = profile.full_name || "Unknown trainer";
+    const senderEmail =
+      profile.contact_email || accountEmail || "No email provided";
+    const senderUsername = profile.username || "no-username";
+
     const { error } = await supabase.from("support_messages").insert({
       trainer_id: profile.id,
-      trainer_name: profile.full_name,
-      trainer_email: profile.contact_email || accountEmail,
-      trainer_username: profile.username,
+      trainer_name: senderName,
+      trainer_email: senderEmail,
+      trainer_username: senderUsername,
       subject: supportSubject.trim(),
       message: supportMessage.trim(),
       status: "new",

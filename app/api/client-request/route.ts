@@ -40,7 +40,13 @@ export async function POST(request: Request) {
       message,
     } = body;
 
-    if (!trainerId || !packageId || !clientName || !clientEmail || !fitnessGoal) {
+    if (
+      !trainerId ||
+      !packageId ||
+      !clientName ||
+      !clientEmail ||
+      !fitnessGoal
+    ) {
       return NextResponse.json(
         { error: "Missing required fields." },
         { status: 400 }
@@ -54,7 +60,10 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (trainerError) {
-      return NextResponse.json({ error: trainerError.message }, { status: 400 });
+      return NextResponse.json(
+        { error: trainerError.message },
+        { status: 400 }
+      );
     }
 
     if (!trainer) {
@@ -72,7 +81,10 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (packageError) {
-      return NextResponse.json({ error: packageError.message }, { status: 400 });
+      return NextResponse.json(
+        { error: packageError.message },
+        { status: 400 }
+      );
     }
 
     if (!selectedPackage) {
@@ -105,7 +117,6 @@ export async function POST(request: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const dashboardRequestsUrl = `${appUrl}/dashboard/requests`;
-    const logoUrl = `${appUrl}/fitlink-logo-email.png`;
 
     if (!trainerEmail) {
       return NextResponse.json({
@@ -122,16 +133,28 @@ export async function POST(request: Request) {
       subject: `New FitLink request from ${clientName}`,
       replyTo: clientEmail,
       html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; background-color: #f7f5ef; padding: 24px;">
+        <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #f7f5ef; padding: 24px;">
           <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #e5e7eb;">
-            
-            <div style="padding: 24px 24px 12px 24px;">
-              <img
-                src="${logoUrl}"
-                alt="FitLink"
-                width="180"
-                style="display: block; max-width: 180px;"
-              />
+
+            <div style="padding: 26px 24px 12px 24px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="width: 44px; height: 44px; border-radius: 16px; background: #111827; text-align: center; vertical-align: middle;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #60a5fa; vertical-align: middle;"></span>
+                    <span style="display: inline-block; width: 16px; height: 5px; border-radius: 999px; background: #ffffff; vertical-align: middle; margin: 0 -1px;"></span>
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #4ade80; vertical-align: middle;"></span>
+                  </td>
+
+                  <td style="padding-left: 12px; vertical-align: middle;">
+                    <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; color: #111827; font-family: Arial, Helvetica, sans-serif; line-height: 1;">
+                      FitLink
+                    </div>
+                    <div style="margin-top: 6px; font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #6b7280; font-family: Arial, Helvetica, sans-serif; line-height: 1.2;">
+                      TRAIN. CONNECT. GROW.
+                    </div>
+                  </td>
+                </tr>
+              </table>
             </div>
 
             <div style="padding: 12px 24px 24px 24px;">

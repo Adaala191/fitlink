@@ -52,17 +52,24 @@ export default function TrainerPage() {
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [currentUserId, setCurrentUserId] = useState("");
 
   useEffect(() => {
     async function loadTrainerPage() {
       setLoading(true);
       setErrorMessage("");
 
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setCurrentUserId(user?.id || "");
+
       // First we load the trainer profile from the public username in the URL.
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select(
-          "id, username, full_name, specialty, bio, instagram, tiktok, whatsapp, phone, contact_email, image_url"
+          "id, username, full_name, specialty, bio, instagram, tiktok, whatsapp, phone, contact_email, image_url",
         )
         .eq("username", username)
         .maybeSingle();
@@ -144,6 +151,7 @@ export default function TrainerPage() {
   }
 
   const trainerImage = trainer.image_url || defaultTrainerImage;
+  const isTrainerOwner = currentUserId === trainer.id;
 
   return (
     <main className="min-h-screen bg-white text-gray-950">
@@ -154,8 +162,19 @@ export default function TrainerPage() {
             <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-green-500/20 blur-3xl" />
 
             <div className="relative z-10">
-              <div className="inline-flex rounded-2xl bg-white p-3 shadow-sm">
-                <FitLinkLogo href="/" />
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="inline-flex rounded-2xl bg-white p-3 shadow-sm">
+                  <FitLinkLogo href="/" />
+                </div>
+
+                {isTrainerOwner && (
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-black text-gray-950 transition hover:bg-gray-100"
+                  >
+                    Back to Dashboard
+                  </Link>
+                )}
               </div>
 
               <div className="mt-10 grid gap-8 lg:grid-cols-[220px_1fr] lg:items-center">
@@ -171,7 +190,7 @@ export default function TrainerPage() {
                 </div>
 
                 <div>
-                  <h1 className="mt-2 max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
+                  <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
                     Train with {trainer.full_name}
                   </h1>
 
@@ -193,7 +212,6 @@ export default function TrainerPage() {
                     {trainer.bio || "This trainer has not added a bio yet."}
                   </p>
 
-                  {/* Main actions for clients: choose a package, send a request, or contact the trainer directly. */}
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <a
                       href="#packages"
@@ -212,7 +230,7 @@ export default function TrainerPage() {
                     {trainer.instagram && (
                       <a
                         href={`https://instagram.com/${cleanUsername(
-                          trainer.instagram
+                          trainer.instagram,
                         )}`}
                         target="_blank"
                         rel="noreferrer"
@@ -226,7 +244,7 @@ export default function TrainerPage() {
                     {trainer.tiktok && (
                       <a
                         href={`https://www.tiktok.com/@${cleanUsername(
-                          trainer.tiktok
+                          trainer.tiktok,
                         )}`}
                         target="_blank"
                         rel="noreferrer"
@@ -276,7 +294,7 @@ export default function TrainerPage() {
         </div>
 
         <div className="mt-4 rounded-[2rem] border border-gray-200 bg-white p-5 md:p-7">
-          <div className="flex flex-col gap-3 border-b border-gray-200 pb-6 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-4 border-b border-gray-200 pb-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
                 Coaching packages
@@ -292,13 +310,11 @@ export default function TrainerPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-gray-950 px-5 py-4 text-white">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-green-900">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
                 Page status
               </p>
-              <p className="mt-1 font-black text-green-300">
-                Live and accepting leads
-              </p>
+              <p className="mt-1 font-black">Live and accepting leads</p>
             </div>
           </div>
 
@@ -316,6 +332,15 @@ export default function TrainerPage() {
               <p className="mt-2 text-gray-600">
                 This trainer has not published any active packages.
               </p>
+
+              {isTrainerOwner && (
+                <Link
+                  href="/dashboard/packages"
+                  className="mt-5 inline-block rounded-xl bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700"
+                >
+                  Add Your First Package
+                </Link>
+              )}
             </div>
           )}
         </div>
