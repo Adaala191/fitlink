@@ -29,73 +29,93 @@ export default function SignupPage() {
     setErrorMessage("");
   }
 
-async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-  setStatus("Creating account...");
-  setErrorMessage("");
+    setStatus("Creating account...");
+    setErrorMessage("");
 
-  const usernameValidation = validateUsername(formData.username);
+    const usernameValidation = validateUsername(formData.username);
 
-  if (!usernameValidation.isValid) {
-    setStatus("");
-    setErrorMessage(usernameValidation.error);
-    return;
-  }
+    if (!usernameValidation.isValid) {
+      setStatus("");
+      setErrorMessage(usernameValidation.error);
+      return;
+    }
 
-  const cleanUsername = usernameValidation.username;
-  const cleanEmail = formData.email.trim().toLowerCase();
+    const cleanUsername = usernameValidation.username;
+    const cleanEmail = formData.email.trim().toLowerCase();
 
-  const emailCheckResponse = await fetch("/api/check-email", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: cleanEmail,
-    }),
-  });
+    const { data: existingProfile, error: usernameCheckError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", cleanUsername)
+      .maybeSingle();
 
-  const emailCheckData = await emailCheckResponse.json();
+    if (usernameCheckError) {
+      setStatus("");
+      setErrorMessage(usernameCheckError.message);
+      return;
+    }
 
-  if (emailCheckData.exists) {
-    setStatus("");
-    setErrorMessage("Email already exists.");
-    return;
-  }
+    if (existingProfile) {
+      setStatus("");
+      setErrorMessage("Username already taken. Please choose another one.");
+      return;
+    }
 
-  if (!emailCheckResponse.ok) {
-    setStatus("");
-    setErrorMessage(emailCheckData.error || "Could not check email.");
-    return;
-  }
-
-  const { error } = await supabase.auth.signUp({
-    email: cleanEmail,
-    password: formData.password,
-    options: {
-      data: {
-        full_name: formData.fullName.trim(),
-        username: cleanUsername,
+    const emailCheckResponse = await fetch("/api/check-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    },
-  });
+      body: JSON.stringify({
+        email: cleanEmail,
+      }),
+    });
 
-  if (error) {
-    setStatus("");
-    setErrorMessage(error.message);
-    return;
+    const emailCheckData = await emailCheckResponse.json();
+
+    if (emailCheckData.exists) {
+      setStatus("");
+      setErrorMessage("Email already exists.");
+      return;
+    }
+
+    if (!emailCheckResponse.ok) {
+      setStatus("");
+      setErrorMessage(emailCheckData.error || "Could not check email.");
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password: formData.password,
+      options: {
+        data: {
+          full_name: formData.fullName.trim(),
+          username: cleanUsername,
+        },
+      },
+    });
+
+    if (error) {
+      setStatus("");
+      setErrorMessage(error.message);
+      return;
+    }
+
+    setStatus(
+      "Account created. Please check your email and confirm your account.",
+    );
+
+    setFormData({
+      fullName: "",
+      username: "",
+      email: "",
+      password: "",
+    });
   }
-
-  setStatus("Account created. Please check your email and confirm your account.");
-
-  setFormData({
-    fullName: "",
-    username: "",
-    email: "",
-    password: "",
-  });
-}
 
   return (
     <main className="min-h-screen bg-white p-2 text-gray-950 md:p-3 lg:p-4">
@@ -207,7 +227,7 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
                   onChange={handleChange}
                   type="text"
                   required
-                  placeholder="abdalla-fitness"
+                  placeholder="Don-fitness"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
                 />
 

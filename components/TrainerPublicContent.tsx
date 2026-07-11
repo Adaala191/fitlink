@@ -110,8 +110,8 @@ export default function TrainerPublicContent({
                 key={pkg.id}
                 className={`group flex min-h-[360px] flex-col rounded-3xl border p-5 transition ${
                   isSelected
-                    ? "border-blue-300 bg-blue-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? "border-blue-300 bg-blue-50 shadow-sm"
+                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                 }`}
               >
                 <div className="flex h-full flex-col gap-4">
@@ -128,13 +128,13 @@ export default function TrainerPublicContent({
                       </span>
 
                       {isSelected && (
-                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-800">
+                        <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white">
                           Selected
                         </span>
                       )}
                     </div>
 
-                    <h3 className="mt-3 text-2xl font-black tracking-tight">
+                    <h3 className="mt-4 text-2xl font-black tracking-tight text-gray-950">
                       {pkg.title}
                     </h3>
 
@@ -143,26 +143,44 @@ export default function TrainerPublicContent({
                     </p>
                   </div>
 
-                  <div className="mt-auto rounded-2xl bg-gray-950 px-5 py-4 text-white">
-                    <p className="text-sm font-bold text-gray-300">
-                      {pkg.duration}
-                    </p>
+                  <div className="mt-auto grid gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-500">
+                          Duration
+                        </p>
 
-                    <p className="mt-1 text-2xl font-black">{pkg.price}</p>
+                        <p className="mt-2 text-lg font-black text-gray-950">
+                          {pkg.duration}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+                          Price
+                        </p>
+
+                        <p className="mt-2 text-lg font-black text-gray-950">
+                          {pkg.price}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPackage(pkg.id)}
+                      className={`rounded-2xl border px-5 py-4 font-black transition ${
+                        isSelected
+                          ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                          : "border-blue-200 bg-white text-blue-700 hover:border-blue-600 hover:bg-blue-50"
+                      }`}
+                    >
+                      {isSelected
+                        ? "Selected — Continue Below"
+                        : "Choose Package"}
+                    </button>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleSelectPackage(pkg.id)}
-                  className={`mt-5 w-full rounded-2xl px-5 py-4 font-black transition ${
-                    isSelected
-                      ? "bg-green-500 text-gray-950 hover:bg-green-400"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
-                >
-                  {isSelected ? "Selected — Continue Below" : "Choose Package"}
-                </button>
               </div>
             );
           })}

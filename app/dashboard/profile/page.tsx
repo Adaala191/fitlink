@@ -158,7 +158,6 @@ export default function EditProfilePage() {
 
     const newImageUrl = publicUrlData.publicUrl;
 
-    // Save the image immediately so the trainer does not lose it if they leave the page.
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -202,7 +201,34 @@ export default function EditProfilePage() {
 
     const cleanUsername = usernameValidation.username;
 
-    const cleanImageUrl = profile.image_url.split("?")[0];
+    const cleanImageUrl = profile.image_url
+      ? profile.image_url.split("?")[0]
+      : "";
+
+    const usernameCheckResponse = await fetch("/api/check-username", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: cleanUsername,
+        currentProfileId: profile.id,
+      }),
+    });
+
+    const usernameCheckData = await usernameCheckResponse.json();
+
+    if (usernameCheckData.exists) {
+      setStatus("");
+      setErrorMessage("Username already taken. Please choose another one.");
+      return;
+    }
+
+    if (!usernameCheckResponse.ok) {
+      setStatus("");
+      setErrorMessage(usernameCheckData.error || "Could not check username.");
+      return;
+    }
 
     const { error } = await supabase
       .from("profiles")
@@ -222,6 +248,12 @@ export default function EditProfilePage() {
 
     if (error) {
       setStatus("");
+
+      if (error.message.includes("profiles_username_key")) {
+        setErrorMessage("Username already taken. Please choose another one.");
+        return;
+      }
+
       setErrorMessage(error.message);
       return;
     }
