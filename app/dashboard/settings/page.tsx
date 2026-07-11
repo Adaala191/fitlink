@@ -6,6 +6,8 @@ import CopyLinkButton from "@/components/CopyLinkButton";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
 
+const adminEmail = "adaala191@gmail.com";
+
 type TrainerProfile = {
   id: string;
   username: string;
@@ -89,10 +91,12 @@ export default function SettingsPage() {
     setSupportStatus("");
     setSupportError("");
 
-    // For now, support messages are saved in Supabase.
-    // Later we can add an email notification to the FitLink admin.
+    // Support messages are saved in Supabase so the admin can review them later.
     const { error } = await supabase.from("support_messages").insert({
       trainer_id: profile.id,
+      trainer_name: profile.full_name,
+      trainer_email: profile.contact_email || accountEmail,
+      trainer_username: profile.username,
       subject: supportSubject.trim(),
       message: supportMessage.trim(),
       status: "new",
@@ -144,20 +148,35 @@ export default function SettingsPage() {
 
   const publicPageUrl = `/trainer/${profile.username}`;
   const publicLink = `${window.location.origin}${publicPageUrl}`;
+  const isAdmin = accountEmail === adminEmail;
 
   return (
     <DashboardLayout publicPageUrl={publicPageUrl}>
       <section className="w-full">
         <div className="rounded-3xl bg-gray-950 p-6 text-white">
-          <p className="text-sm font-semibold text-gray-300">
-            Account Settings
-          </p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-300">
+                Account Settings
+              </p>
 
-          <h1 className="mt-1 text-3xl font-bold">Settings</h1>
+              <h1 className="mt-2 text-3xl font-black tracking-tight">
+                Settings
+              </h1>
 
-          <p className="mt-2 max-w-2xl text-gray-300">
-            Manage your account details, public page link, and support requests.
-          </p>
+              <p className="mt-2 max-w-2xl text-gray-300">
+                Manage your public page, account details, support requests, and
+                session.
+              </p>
+            </div>
+
+            <Link
+              href={publicPageUrl}
+              className="rounded-2xl bg-white px-5 py-3 text-center font-bold text-gray-950 transition hover:bg-gray-100"
+            >
+              View Public Page
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.9fr]">
@@ -166,7 +185,7 @@ export default function SettingsPage() {
               Public page
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold">Your FitLink URL</h2>
+            <h2 className="mt-2 text-2xl font-black">Your FitLink URL</h2>
 
             <p className="mt-2 text-gray-600">
               Share this link in your Instagram bio, TikTok, WhatsApp, or
@@ -196,7 +215,7 @@ export default function SettingsPage() {
               Account
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold">Account details</h2>
+            <h2 className="mt-2 text-2xl font-black">Account details</h2>
 
             <div className="mt-5 grid gap-4">
               <div className="rounded-2xl bg-gray-50 p-4">
@@ -222,6 +241,29 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
+
+            {isAdmin && (
+              <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">
+                  Admin access
+                </p>
+
+                <h3 className="mt-2 text-xl font-black text-gray-950">
+                  Support inbox
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  Review support messages sent by trainers from their dashboard.
+                </p>
+
+                <Link
+                  href="/admin/support"
+                  className="mt-4 inline-block rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
+                >
+                  Open Admin Support
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 
@@ -232,7 +274,9 @@ export default function SettingsPage() {
                 Support
               </p>
 
-              <h2 className="mt-2 text-2xl font-bold">Contact FitLink Support</h2>
+              <h2 className="mt-2 text-2xl font-black">
+                Contact FitLink Support
+              </h2>
 
               <p className="mt-2 max-w-2xl text-gray-600">
                 Send a message if you need help with your profile, packages,
@@ -305,12 +349,12 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-6">
+        <div className="mt-6 rounded-3xl border border-red-100 bg-white p-6">
           <p className="text-sm font-black uppercase tracking-[0.2em] text-red-600">
             Session
           </p>
 
-          <h2 className="mt-2 text-2xl font-bold">Log out</h2>
+          <h2 className="mt-2 text-2xl font-black">Log out</h2>
 
           <p className="mt-2 max-w-2xl text-gray-600">
             Log out of your FitLink dashboard on this device.
