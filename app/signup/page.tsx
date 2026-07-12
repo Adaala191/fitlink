@@ -92,6 +92,7 @@ export default function SignupPage() {
       email: cleanEmail,
       password: formData.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/login`,
         data: {
           full_name: formData.fullName.trim(),
           username: cleanUsername,
@@ -232,8 +233,8 @@ export default function SignupPage() {
                 />
 
                 <p className="mt-1 text-xs text-gray-500">
-                  Use lowercase letters, numbers, and hyphens only. Example:
-                  abdalla-fitness
+                  Use lowercase letters, numbers, hyphens, and underscores.
+                  Example: abdalla_fitness
                 </p>
 
                 <p className="mt-1 text-xs text-gray-500">

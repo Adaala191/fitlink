@@ -48,27 +48,37 @@ export function validateUsername(value: string) {
     };
   }
 
-  if (!/^[a-z0-9-]+$/.test(username)) {
+  if (!/^[a-z0-9_-]+$/.test(username)) {
     return {
       isValid: false,
       username,
-      error: "Username can only use letters, numbers, and hyphens.",
+      error: "Username can only use letters, numbers, hyphens, and underscores.",
     };
   }
 
-  if (username.startsWith("-") || username.endsWith("-")) {
+  if (
+    username.startsWith("-") ||
+    username.endsWith("-") ||
+    username.startsWith("_") ||
+    username.endsWith("_")
+  ) {
     return {
       isValid: false,
       username,
-      error: "Username cannot start or end with a hyphen.",
+      error: "Username cannot start or end with a hyphen or underscore.",
     };
   }
 
-  if (username.includes("--")) {
+  if (
+    username.includes("--") ||
+    username.includes("__") ||
+    username.includes("-_") ||
+    username.includes("_-")
+  ) {
     return {
       isValid: false,
       username,
-      error: "Username cannot include two hyphens in a row.",
+      error: "Username cannot include repeated or mixed separators.",
     };
   }
 
