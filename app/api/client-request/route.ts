@@ -15,6 +15,15 @@ if (!supabaseSecretKey) {
 
 const supabase = createClient(supabaseUrl, supabaseSecretKey);
 
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 export async function POST(request: Request) {
   try {
     const resendApiKey = process.env.RESEND_API_KEY;
@@ -22,7 +31,7 @@ export async function POST(request: Request) {
     if (!resendApiKey) {
       return NextResponse.json(
         { error: "Missing RESEND_API_KEY." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -30,15 +39,13 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    const {
-      trainerId,
-      packageId,
-      clientName,
-      clientEmail,
-      clientPhone,
-      fitnessGoal,
-      message,
-    } = body;
+    const trainerId = String(body.trainerId || "").trim();
+    const packageId = String(body.packageId || "").trim();
+    const clientName = String(body.clientName || "").trim();
+    const clientEmail = String(body.clientEmail || "").trim().toLowerCase();
+    const clientPhone = String(body.clientPhone || "").trim();
+    const fitnessGoal = String(body.fitnessGoal || "").trim();
+    const message = String(body.message || "").trim();
 
     if (
       !trainerId ||
@@ -49,7 +56,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: "Missing required fields." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -62,20 +69,20 @@ export async function POST(request: Request) {
     if (trainerError) {
       return NextResponse.json(
         { error: trainerError.message },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!trainer) {
       return NextResponse.json(
         { error: "Trainer not found." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     const { data: selectedPackage, error: packageError } = await supabase
       .from("packages")
-      .select("title, price, duration")
+      .select("id, title, price, duration")
       .eq("id", packageId)
       .eq("trainer_id", trainerId)
       .maybeSingle();
@@ -83,14 +90,14 @@ export async function POST(request: Request) {
     if (packageError) {
       return NextResponse.json(
         { error: packageError.message },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!selectedPackage) {
       return NextResponse.json(
         { error: "Package not found." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -98,12 +105,12 @@ export async function POST(request: Request) {
       .from("client_requests")
       .insert({
         trainer_id: trainerId,
-        package_id: packageId,
+        package_id: selectedPackage.id,
         client_name: clientName,
         client_email: clientEmail,
-        client_phone: clientPhone,
+        client_phone: clientPhone || null,
         fitness_goal: fitnessGoal,
-        message,
+        message: message || null,
         status: "new",
       })
       .select("id")
@@ -127,13 +134,23 @@ export async function POST(request: Request) {
       });
     }
 
+    const safeClientName = escapeHtml(clientName);
+    const safeClientEmail = escapeHtml(clientEmail);
+    const safeClientPhone = escapeHtml(clientPhone || "Not provided");
+    const safeFitnessGoal = escapeHtml(fitnessGoal);
+    const safeMessage = escapeHtml(message || "No message provided.");
+    const safePackageTitle = escapeHtml(selectedPackage.title);
+    const safePackagePrice = escapeHtml(selectedPackage.price);
+    const safePackageDuration = escapeHtml(selectedPackage.duration);
+    const safeDashboardRequestsUrl = escapeHtml(dashboardRequestsUrl);
+
     const { error: emailError } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "FitLink <onboarding@resend.dev>",
       to: trainerEmail,
       subject: `New FitLink request from ${clientName}`,
       replyTo: clientEmail,
       html: `
-        <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #f7f5ef; padding: 24px;">
+        <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #f7f8fa; padding: 24px;">
           <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #e5e7eb;">
 
             <div style="padding: 26px 24px 12px 24px;">
@@ -164,7 +181,7 @@ export async function POST(request: Request) {
                 </p>
 
                 <h1 style="margin: 0; font-size: 26px; line-height: 1.2;">
-                  ${clientName} is interested in your coaching.
+                  ${safeClientName} is interested in your coaching.
                 </h1>
 
                 <p style="margin: 14px 0 0 0; color: #d1d5db;">
@@ -177,11 +194,9 @@ export async function POST(request: Request) {
                   Client Details
                 </h2>
 
-                <p style="margin: 6px 0;"><strong>Name:</strong> ${clientName}</p>
-                <p style="margin: 6px 0;"><strong>Email:</strong> ${clientEmail}</p>
-                <p style="margin: 6px 0;"><strong>Phone:</strong> ${
-                  clientPhone || "Not provided"
-                }</p>
+                <p style="margin: 6px 0;"><strong>Name:</strong> ${safeClientName}</p>
+                <p style="margin: 6px 0;"><strong>Email:</strong> ${safeClientEmail}</p>
+                <p style="margin: 6px 0;"><strong>Phone:</strong> ${safeClientPhone}</p>
               </div>
 
               <div style="background: #eff6ff; border-radius: 16px; padding: 18px; margin-top: 16px;">
@@ -189,15 +204,9 @@ export async function POST(request: Request) {
                   Selected Package
                 </h2>
 
-                <p style="margin: 6px 0;"><strong>Package:</strong> ${
-                  selectedPackage.title
-                }</p>
-                <p style="margin: 6px 0;"><strong>Price:</strong> ${
-                  selectedPackage.price
-                }</p>
-                <p style="margin: 6px 0;"><strong>Duration:</strong> ${
-                  selectedPackage.duration
-                }</p>
+                <p style="margin: 6px 0;"><strong>Package:</strong> ${safePackageTitle}</p>
+                <p style="margin: 6px 0;"><strong>Price:</strong> ${safePackagePrice}</p>
+                <p style="margin: 6px 0;"><strong>Duration:</strong> ${safePackageDuration}</p>
               </div>
 
               <div style="background: #f0fdf4; border-radius: 16px; padding: 18px; margin-top: 16px;">
@@ -205,19 +214,19 @@ export async function POST(request: Request) {
                   Fitness Goal
                 </h2>
 
-                <p style="margin: 0; color: #374151;">${fitnessGoal}</p>
+                <p style="margin: 0; color: #374151;">${safeFitnessGoal}</p>
 
                 <h2 style="margin: 18px 0 12px 0; color: #166534; font-size: 18px;">
                   Message
                 </h2>
 
                 <p style="margin: 0; color: #374151;">
-                  ${message || "No message provided."}
+                  ${safeMessage}
                 </p>
               </div>
 
               <a
-                href="${dashboardRequestsUrl}"
+                href="${safeDashboardRequestsUrl}"
                 style="display: inline-block; margin-top: 22px; background: #16a34a; color: #ffffff; padding: 14px 20px; border-radius: 14px; text-decoration: none; font-weight: 800;"
               >
                 View request in dashboard
@@ -244,6 +253,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       requestId: clientRequest.id,
+      packageId: selectedPackage.id,
       emailSent: true,
     });
   } catch (error) {

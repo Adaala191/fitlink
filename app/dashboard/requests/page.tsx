@@ -10,6 +10,15 @@ type TrainerProfile = {
   username: string;
 };
 
+type RequestStatus = "new" | "contacted" | "closed";
+
+type PackageSummary = {
+  id: string;
+  title: string;
+  price: string;
+  duration: string;
+};
+
 type ClientRequest = {
   id: string;
   trainer_id: string;
@@ -19,14 +28,25 @@ type ClientRequest = {
   client_phone: string | null;
   fitness_goal: string;
   message: string | null;
-  status: "new" | "contacted" | "closed";
+  status: RequestStatus;
   created_at: string;
-  packages?: {
-    title: string;
-  }[];
+  package: PackageSummary | null;
 };
 
-function getStatusBadgeClass(status: ClientRequest["status"]) {
+type ClientRequestRow = {
+  id: string;
+  trainer_id: string;
+  package_id: string | null;
+  client_name: string;
+  client_email: string;
+  client_phone: string | null;
+  fitness_goal: string;
+  message: string | null;
+  status: RequestStatus;
+  created_at: string;
+};
+
+function getStatusBadgeClass(status: RequestStatus) {
   if (status === "new") {
     return "bg-blue-100 text-blue-800";
   }
@@ -38,7 +58,7 @@ function getStatusBadgeClass(status: ClientRequest["status"]) {
   return "bg-green-100 text-green-800";
 }
 
-function getRequestCardClass(status: ClientRequest["status"]) {
+function getRequestCardClass(status: RequestStatus) {
   if (status === "new") {
     return "border-blue-200 bg-blue-50";
   }
@@ -50,7 +70,7 @@ function getRequestCardClass(status: ClientRequest["status"]) {
   return "border-green-200 bg-green-50";
 }
 
-function formatStatus(status: ClientRequest["status"]) {
+function formatStatus(status: RequestStatus) {
   if (status === "new") {
     return "New";
   }
@@ -70,93 +90,49 @@ export default function ClientRequestsPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    async function loadRequestsPage() {
-      setLoading(true);
-      setErrorMessage("");
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError) {
-        setErrorMessage(userError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        setErrorMessage(profileError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!profileData) {
-        setErrorMessage("No trainer profile found for this account.");
-        setLoading(false);
-        return;
-      }
-
-      const { data: requestsData, error: requestsError } = await supabase
-        .from("client_requests")
-        .select(
-          `
-          id,
-          trainer_id,
-          package_id,
-          client_name,
-          client_email,
-          client_phone,
-          fitness_goal,
-          message,
-          status,
-          created_at,
-          packages (
-            title
-          )
-        `
-        )
-        .eq("trainer_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (requestsError) {
-        setErrorMessage(requestsError.message);
-        setLoading(false);
-        return;
-      }
-
-      setProfile(profileData as TrainerProfile);
-      setRequests((requestsData || []) as ClientRequest[]);
-      setLoading(false);
-    }
-
     loadRequestsPage();
   }, []);
 
-  async function handleStatusChange(
-    requestId: string,
-    newStatus: ClientRequest["status"]
-  ) {
-    setStatusMessage("Updating request...");
+  async function loadRequestsPage() {
+    setLoading(true);
     setErrorMessage("");
 
-    const { data, error } = await supabase
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) {
+      setErrorMessage(userError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      setErrorMessage(profileError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!profileData) {
+      setErrorMessage("No trainer profile found for this account.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: requestsData, error: requestsError } = await supabase
       .from("client_requests")
-      .update({
-        status: newStatus,
-      })
-      .eq("id", requestId)
       .select(
         `
         id,
@@ -168,13 +144,73 @@ export default function ClientRequestsPage() {
         fitness_goal,
         message,
         status,
-        created_at,
-        packages (
-          title
-        )
-      `
+        created_at
+      `,
       )
-      .single();
+      .eq("trainer_id", profileData.id)
+      .order("created_at", { ascending: false });
+
+    if (requestsError) {
+      setErrorMessage(requestsError.message);
+      setLoading(false);
+      return;
+    }
+
+    const requestRows = (requestsData || []) as ClientRequestRow[];
+
+    const packageIds = Array.from(
+      new Set(
+        requestRows
+          .map((request) => request.package_id)
+          .filter((packageId): packageId is string => Boolean(packageId)),
+      ),
+    );
+
+    let packagesData: PackageSummary[] = [];
+
+    if (packageIds.length > 0) {
+      const { data: packageRows, error: packagesError } = await supabase
+        .from("packages")
+        .select("id, title, price, duration")
+        .in("id", packageIds);
+
+      if (packagesError) {
+        setErrorMessage(packagesError.message);
+        setLoading(false);
+        return;
+      }
+
+      packagesData = (packageRows || []) as PackageSummary[];
+    }
+
+    const requestsWithPackages: ClientRequest[] = requestRows.map((request) => {
+      const selectedPackage =
+        packagesData.find((pkg) => pkg.id === request.package_id) || null;
+
+      return {
+        ...request,
+        package: selectedPackage,
+      };
+    });
+
+    setProfile(profileData as TrainerProfile);
+    setRequests(requestsWithPackages);
+    setLoading(false);
+  }
+
+  async function handleStatusChange(
+    requestId: string,
+    newStatus: RequestStatus,
+  ) {
+    setStatusMessage("Updating request...");
+    setErrorMessage("");
+
+    const { error } = await supabase
+      .from("client_requests")
+      .update({
+        status: newStatus,
+      })
+      .eq("id", requestId);
 
     if (error) {
       setStatusMessage("");
@@ -184,8 +220,13 @@ export default function ClientRequestsPage() {
 
     setRequests((currentRequests) =>
       currentRequests.map((request) =>
-        request.id === requestId ? (data as ClientRequest) : request
-      )
+        request.id === requestId
+          ? {
+              ...request,
+              status: newStatus,
+            }
+          : request,
+      ),
     );
 
     setStatusMessage("Request updated.");
@@ -207,7 +248,7 @@ export default function ClientRequestsPage() {
     }
 
     setRequests((currentRequests) =>
-      currentRequests.filter((request) => request.id !== requestId)
+      currentRequests.filter((request) => request.id !== requestId),
     );
 
     setStatusMessage("Request deleted.");
@@ -263,24 +304,22 @@ export default function ClientRequestsPage() {
   const publicPageUrl = `/trainer/${profile.username}`;
 
   const newRequestsCount = requests.filter(
-    (request) => request.status === "new"
+    (request) => request.status === "new",
   ).length;
 
   const contactedRequestsCount = requests.filter(
-    (request) => request.status === "contacted"
+    (request) => request.status === "contacted",
   ).length;
 
   const closedRequestsCount = requests.filter(
-    (request) => request.status === "closed"
+    (request) => request.status === "closed",
   ).length;
 
   return (
     <DashboardLayout publicPageUrl={publicPageUrl}>
       <section className="w-full">
         <div className="rounded-3xl bg-gray-950 p-6 text-white">
-          <p className="text-sm font-semibold text-gray-300">
-            Client Requests
-          </p>
+          <p className="text-sm font-semibold text-gray-300">Client Requests</p>
 
           <h1 className="mt-1 text-3xl font-bold">Manage Requests</h1>
 
@@ -310,8 +349,8 @@ export default function ClientRequestsPage() {
               statusMessage.toLowerCase().includes("delet")
                 ? "bg-red-100 text-red-800"
                 : statusMessage.toLowerCase().includes("updating")
-                ? "bg-blue-100 text-blue-800"
-                : "bg-green-100 text-green-800"
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-green-100 text-green-800"
             }`}
           >
             {statusMessage}
@@ -358,7 +397,7 @@ export default function ClientRequestsPage() {
                 <div
                   key={request.id}
                   className={`rounded-2xl border p-5 transition ${getRequestCardClass(
-                    request.status
+                    request.status,
                   )}`}
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -370,7 +409,7 @@ export default function ClientRequestsPage() {
 
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
-                            request.status
+                            request.status,
                           )}`}
                         >
                           {formatStatus(request.status)}
@@ -387,15 +426,15 @@ export default function ClientRequestsPage() {
                       onChange={(event) =>
                         handleStatusChange(
                           request.id,
-                          event.target.value as ClientRequest["status"]
+                          event.target.value as RequestStatus,
                         )
                       }
                       className={`rounded-xl border px-4 py-3 text-sm font-semibold outline-none ${
                         request.status === "new"
                           ? "border-blue-300 bg-white text-blue-800 focus:border-blue-700"
                           : request.status === "contacted"
-                          ? "border-amber-300 bg-white text-amber-800 focus:border-amber-700"
-                          : "border-green-300 bg-white text-green-800 focus:border-green-700"
+                            ? "border-amber-300 bg-white text-amber-800 focus:border-amber-700"
+                            : "border-green-300 bg-white text-green-800 focus:border-green-700"
                       }`}
                     >
                       <option value="new">New</option>
@@ -410,9 +449,22 @@ export default function ClientRequestsPage() {
                         Selected Package
                       </p>
 
-                      <p className="mt-1 font-bold">
-                        {request.packages?.[0]?.title || "Package not found"}
-                      </p>
+                      {request.package ? (
+                        <div className="mt-1">
+                          <p className="font-bold text-gray-950">
+                            {request.package.title}
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-gray-600">
+                            {request.package.duration} •{" "}
+                            {request.package.price}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="mt-1 font-bold text-gray-500">
+                          Package not found
+                        </p>
+                      )}
                     </div>
 
                     <div className="rounded-xl bg-white/80 p-4">
