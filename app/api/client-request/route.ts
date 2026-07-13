@@ -121,7 +121,6 @@ export async function POST(request: Request) {
     }
 
     const trainerEmail = trainer.contact_email;
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const dashboardRequestsUrl = `${appUrl}/dashboard/requests`;
 
@@ -147,95 +146,130 @@ export async function POST(request: Request) {
     const { error: emailError } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "FitLink <onboarding@resend.dev>",
       to: trainerEmail,
-      subject: `New FitLink request from ${clientName}`,
+      subject: `New coaching inquiry from ${clientName}`,
       replyTo: clientEmail,
       html: `
-        <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #f7f8fa; padding: 24px;">
-          <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #e5e7eb;">
+        <div style="margin:0; padding:0; background:#f8fafc; font-family:Arial, Helvetica, sans-serif; color:#0f172a;">
+          <div style="max-width:640px; margin:0 auto; padding:28px 16px;">
+            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:28px; overflow:hidden;">
 
-            <div style="padding: 26px 24px 12px 24px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="width: 44px; height: 44px; border-radius: 16px; background: #111827; text-align: center; vertical-align: middle;">
-                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #60a5fa; vertical-align: middle;"></span>
-                    <span style="display: inline-block; width: 16px; height: 5px; border-radius: 999px; background: #ffffff; vertical-align: middle; margin: 0 -1px;"></span>
-                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #4ade80; vertical-align: middle;"></span>
-                  </td>
+              <div style="padding:28px 28px 18px 28px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                  <tr>
+                    <td style="vertical-align:middle;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td style="width:44px; height:44px; border-radius:16px; background:#0f172a; text-align:center; vertical-align:middle;">
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:999px; background:#3b82f6; vertical-align:middle;"></span>
+                            <span style="display:inline-block; width:16px; height:5px; border-radius:999px; background:#ffffff; vertical-align:middle; margin:0 -1px;"></span>
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:999px; background:#22c55e; vertical-align:middle;"></span>
+                          </td>
 
-                  <td style="padding-left: 12px; vertical-align: middle;">
-                    <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; color: #111827; font-family: Arial, Helvetica, sans-serif; line-height: 1;">
-                      FitLink
-                    </div>
-                    <div style="margin-top: 6px; font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #6b7280; font-family: Arial, Helvetica, sans-serif; line-height: 1.2;">
-                      TRAIN. CONNECT. GROW.
-                    </div>
-                  </td>
-                </tr>
-              </table>
+                          <td style="padding-left:12px; vertical-align:middle;">
+                            <div style="font-size:25px; font-weight:800; letter-spacing:-0.6px; color:#0f172a; line-height:1;">
+                              FitLink
+                            </div>
+                            <div style="margin-top:6px; font-size:11px; font-weight:600; letter-spacing:1.8px; color:#64748b; line-height:1.2;">
+                              Train. Connect. Grow.
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+
+                    <td style="text-align:right; vertical-align:middle;">
+                      <span style="display:inline-block; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:999px; padding:8px 12px; font-size:13px; font-weight:600;">
+                        New inquiry
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <div style="padding:0 28px 28px 28px;">
+                <div style="border-top:1px solid #e2e8f0; padding-top:26px;">
+                  <h1 style="margin:0; font-size:30px; line-height:1.15; letter-spacing:-1px; color:#0f172a;">
+                    ${safeClientName} wants to work with you.
+                  </h1>
+
+                  <p style="margin:14px 0 0 0; color:#475569; font-size:16px; line-height:1.7;">
+                    A new client submitted a coaching inquiry through your FitLink profile. Review the details below and follow up when you are ready.
+                  </p>
+                </div>
+
+                <div style="margin-top:24px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:22px; padding:20px;">
+                  <h2 style="margin:0 0 14px 0; color:#0f172a; font-size:18px; letter-spacing:-0.3px;">
+                    Client details
+                  </h2>
+
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse;">
+                    <tr>
+                      <td style="padding:9px 0; color:#64748b; width:120px; font-size:14px;">Name</td>
+                      <td style="padding:9px 0; color:#0f172a; font-size:15px; font-weight:600;">${safeClientName}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:9px 0; color:#64748b; width:120px; font-size:14px;">Email</td>
+                      <td style="padding:9px 0; color:#0f172a; font-size:15px; font-weight:600;">${safeClientEmail}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:9px 0; color:#64748b; width:120px; font-size:14px;">Phone</td>
+                      <td style="padding:9px 0; color:#0f172a; font-size:15px; font-weight:600;">${safeClientPhone}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div style="margin-top:16px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:22px; padding:20px;">
+                  <h2 style="margin:0 0 14px 0; color:#1e3a8a; font-size:18px; letter-spacing:-0.3px;">
+                    Selected package
+                  </h2>
+
+                  <p style="margin:0; color:#0f172a; font-size:17px; font-weight:700;">
+                    ${safePackageTitle}
+                  </p>
+
+                  <p style="margin:8px 0 0 0; color:#1d4ed8; font-size:15px;">
+                    ${safePackageDuration} · ${safePackagePrice}
+                  </p>
+                </div>
+
+                <div style="margin-top:16px; background:#ffffff; border:1px solid #e2e8f0; border-radius:22px; padding:20px;">
+                  <h2 style="margin:0 0 12px 0; color:#0f172a; font-size:18px; letter-spacing:-0.3px;">
+                    Fitness goal
+                  </h2>
+
+                  <p style="margin:0; color:#475569; font-size:15px; line-height:1.7;">
+                    ${safeFitnessGoal}
+                  </p>
+
+                  <div style="height:1px; background:#e2e8f0; margin:18px 0;"></div>
+
+                  <h2 style="margin:0 0 12px 0; color:#0f172a; font-size:18px; letter-spacing:-0.3px;">
+                    Message
+                  </h2>
+
+                  <p style="margin:0; color:#475569; font-size:15px; line-height:1.7;">
+                    ${safeMessage}
+                  </p>
+                </div>
+
+                <div style="margin-top:24px;">
+                  <a
+                    href="${safeDashboardRequestsUrl}"
+                    style="display:inline-block; background:#2563eb; color:#ffffff; padding:14px 22px; border-radius:999px; text-decoration:none; font-size:15px; font-weight:700;"
+                  >
+                    View inquiry in dashboard
+                  </a>
+                </div>
+
+                <p style="margin:24px 0 0 0; color:#64748b; font-size:13px; line-height:1.6;">
+                  This message was sent from your FitLink profile. You can reply directly to this email to contact the client.
+                </p>
+              </div>
             </div>
 
-            <div style="padding: 12px 24px 24px 24px;">
-              <div style="background: #111827; border-radius: 18px; padding: 24px; color: #ffffff;">
-                <p style="margin: 0 0 8px 0; color: #93c5fd; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
-                  New client request
-                </p>
-
-                <h1 style="margin: 0; font-size: 26px; line-height: 1.2;">
-                  ${safeClientName} is interested in your coaching.
-                </h1>
-
-                <p style="margin: 14px 0 0 0; color: #d1d5db;">
-                  You received a new request on FitLink. Review the client details and follow up from your dashboard.
-                </p>
-              </div>
-
-              <div style="background: #f9fafb; border-radius: 16px; padding: 18px; margin-top: 18px;">
-                <h2 style="margin: 0 0 12px 0; color: #111827; font-size: 18px;">
-                  Client Details
-                </h2>
-
-                <p style="margin: 6px 0;"><strong>Name:</strong> ${safeClientName}</p>
-                <p style="margin: 6px 0;"><strong>Email:</strong> ${safeClientEmail}</p>
-                <p style="margin: 6px 0;"><strong>Phone:</strong> ${safeClientPhone}</p>
-              </div>
-
-              <div style="background: #eff6ff; border-radius: 16px; padding: 18px; margin-top: 16px;">
-                <h2 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 18px;">
-                  Selected Package
-                </h2>
-
-                <p style="margin: 6px 0;"><strong>Package:</strong> ${safePackageTitle}</p>
-                <p style="margin: 6px 0;"><strong>Price:</strong> ${safePackagePrice}</p>
-                <p style="margin: 6px 0;"><strong>Duration:</strong> ${safePackageDuration}</p>
-              </div>
-
-              <div style="background: #f0fdf4; border-radius: 16px; padding: 18px; margin-top: 16px;">
-                <h2 style="margin: 0 0 12px 0; color: #166534; font-size: 18px;">
-                  Fitness Goal
-                </h2>
-
-                <p style="margin: 0; color: #374151;">${safeFitnessGoal}</p>
-
-                <h2 style="margin: 18px 0 12px 0; color: #166534; font-size: 18px;">
-                  Message
-                </h2>
-
-                <p style="margin: 0; color: #374151;">
-                  ${safeMessage}
-                </p>
-              </div>
-
-              <a
-                href="${safeDashboardRequestsUrl}"
-                style="display: inline-block; margin-top: 22px; background: #16a34a; color: #ffffff; padding: 14px 20px; border-radius: 14px; text-decoration: none; font-weight: 800;"
-              >
-                View request in dashboard
-              </a>
-
-              <p style="margin-top: 24px; color: #6b7280; font-size: 13px;">
-                This email was sent by FitLink. Train. Connect. Grow.
-              </p>
-            </div>
+            <p style="margin:18px 0 0 0; text-align:center; color:#94a3b8; font-size:12px;">
+              © FitLink · Train. Connect. Grow.
+            </p>
           </div>
         </div>
       `,

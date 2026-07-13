@@ -12,33 +12,63 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "FitLink",
+export const metadata: Metadata = {
+  metadataBase: new URL("https://www.fitlink.space"),
+
+  title: {
+    default: "FitLink",
+    template: "%s | FitLink",
+  },
+
   description:
-    "Create a clean trainer page, showcase coaching packages, and receive client requests in one dashboard.",
+    "FitLink helps independent fitness coaches create a professional profile, showcase coaching packages, and receive organized client inquiries.",
+
+  keywords: [
+    "FitLink",
+    "personal trainer website",
+    "fitness coach profile",
+    "online coaching packages",
+    "trainer client requests",
+    "fitness business software",
+  ],
+
+  applicationName: "FitLink",
+
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+
   openGraph: {
     title: "FitLink",
     description:
-      "Create a clean trainer page, showcase coaching packages, and receive client requests in one dashboard.",
+      "Create your coaching profile, show your packages, and turn client interest into organized inquiries.",
     url: "https://www.fitlink.space",
     siteName: "FitLink",
     images: [
       {
-        url: "https://www.fitlink.space/fitlink-og.png",
+        url: "/fitlink-og.png",
         width: 1200,
         height: 630,
-        alt: "FitLink preview",
+        alt: "FitLink - Train. Connect. Grow.",
       },
     ],
     locale: "en_US",
     type: "website",
   },
+
   twitter: {
     card: "summary_large_image",
     title: "FitLink",
     description:
-      "Create a clean trainer page, showcase coaching packages, and receive client requests in one dashboard.",
-    images: ["https://www.fitlink.space/fitlink-og.png"],
+      "Create your coaching profile, show your packages, and turn client interest into organized inquiries.",
+    images: ["/fitlink-og.png"],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
@@ -52,7 +82,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }
