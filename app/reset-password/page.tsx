@@ -45,69 +45,72 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white p-2 text-gray-950 md:p-3 lg:p-4">
-      <section className="grid min-h-[calc(100vh-1rem)] w-full gap-3 md:min-h-[calc(100vh-1.5rem)] lg:min-h-[calc(100vh-2rem)] lg:grid-cols-[1fr_0.9fr]">
-        <div className="hidden rounded-[2rem] bg-gray-950 p-8 text-white shadow-xl lg:flex lg:flex-col lg:justify-between xl:p-10">
-          <div>
-            <div className="inline-flex rounded-2xl bg-white p-3">
-              <FitLinkLogo href="/" />
-            </div>
+    <main className="min-h-screen bg-[oklch(98.4%_0.003_247.858)] text-slate-950">
+      <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
+        <header className="flex items-center justify-between">
+          <FitLinkLogo href="/" />
 
-            <div className="mt-16">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-green-400">
-                New password
-              </p>
-
-              <h1 className="mt-4 max-w-2xl text-5xl font-black leading-tight tracking-tight">
-                Create your new FitLink password.
-              </h1>
-
-              <p className="mt-5 max-w-xl text-lg leading-8 text-gray-300">
-                Choose a new password for your trainer dashboard.
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-blue-400/20 bg-blue-400/10 p-5">
-            <p className="font-black text-blue-200">Almost done</p>
-            <p className="mt-1 text-sm leading-6 text-gray-300">
-              After updating your password, return to login and sign in again.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex rounded-[2rem] bg-white p-4 shadow-xl md:p-8 lg:items-center lg:justify-center xl:p-10">
-          <div className="w-full max-w-md">
-            <div className="mb-10 flex justify-center lg:hidden">
-              <div className="scale-110">
-                <FitLinkLogo href="/" />
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="hidden rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-950 sm:inline-flex"
+            >
+              Home
+            </Link>
 
             <Link
               href="/login"
-              className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:border-gray-950 hover:text-gray-950"
+              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
             >
-              Back to login
+              Log in
             </Link>
+          </div>
+        </header>
 
-            <div className="mt-5">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-green-600">
+        <div className="grid flex-1 gap-10 py-10 lg:grid-cols-[1fr_0.9fr] lg:items-center lg:py-14">
+          <div className="max-w-2xl">
+            <p className="text-base font-medium text-slate-500">
+              New password
+            </p>
+
+            <h1 className="mt-4 text-5xl font-semibold tracking-[-0.05em] text-slate-950 md:text-6xl">
+              Create your new FitLink password.
+            </h1>
+
+            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+              Choose a new password for your trainer dashboard. After updating
+              it, you can return to login and sign in again.
+            </p>
+
+            <div className="mt-10 border-t border-slate-200 pt-6">
+              <p className="text-xl font-semibold tracking-[-0.03em]">
+                Almost done
+              </p>
+
+              <p className="mt-2 max-w-md leading-7 text-slate-500">
+                Use at least 6 characters and keep your password somewhere safe.
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:ml-auto lg:max-w-md">
+            <div>
+              <p className="text-base font-medium text-slate-500">
                 Reset password
               </p>
 
-              <h1 className="mt-2 text-4xl font-black tracking-tight">
-                New password
-              </h1>
+              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
+                Set new password
+              </h2>
 
-              <p className="mt-3 leading-7 text-gray-600">
+              <p className="mt-3 leading-7 text-slate-600">
                 Enter and confirm your new password.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
+            <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
               <div>
-                <label className="mb-2 block text-sm font-semibold">
+                <label className="mb-2 block text-base font-medium text-slate-800">
                   New password
                 </label>
 
@@ -121,12 +124,12 @@ export default function ResetPasswordPage() {
                   type="password"
                   required
                   placeholder="Create new password"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold">
+                <label className="mb-2 block text-base font-medium text-slate-800">
                   Confirm password
                 </label>
 
@@ -140,21 +143,21 @@ export default function ResetPasswordPage() {
                   type="password"
                   required
                   placeholder="Confirm new password"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
-              <button className="rounded-xl bg-green-500 px-5 py-3 font-semibold text-gray-950 transition hover:bg-green-400">
-                Update Password
+              <button className="rounded-full bg-blue-600 px-6 py-3.5 text-base font-medium text-white transition hover:bg-blue-700">
+                Update password
               </button>
 
               {status && (
-                <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-medium text-green-800">
+                <div className="rounded-2xl bg-green-50 px-4 py-3 text-base font-medium text-green-800">
                   <p>{status}</p>
 
                   <Link
                     href="/login"
-                    className="mt-3 inline-block font-bold underline"
+                    className="mt-3 inline-block font-medium text-green-900 underline-offset-4 hover:underline"
                   >
                     Go to login
                   </Link>
@@ -162,11 +165,21 @@ export default function ResetPasswordPage() {
               )}
 
               {errorMessage && (
-                <p className="rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
+                <p className="rounded-2xl bg-red-50 px-4 py-3 text-base font-medium text-red-800">
                   {errorMessage}
                 </p>
               )}
             </form>
+
+            <p className="mt-7 text-center text-base text-slate-600">
+              Remember your password?{" "}
+              <Link
+                href="/login"
+                className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              >
+                Log in
+              </Link>
+            </p>
           </div>
         </div>
       </section>

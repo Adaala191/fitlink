@@ -80,7 +80,7 @@ export default function TrainerPublicContent({
     const result = await response.json();
 
     if (!response.ok) {
-      setErrorMessage(result.error || "Failed to submit request.");
+      setErrorMessage(result.error || "Failed to submit inquiry.");
       setIsSubmitting(false);
       return;
     }
@@ -90,7 +90,7 @@ export default function TrainerPublicContent({
     }
 
     setFormStatus(
-      "Request submitted successfully. The trainer will contact you soon.",
+      "Inquiry submitted successfully. The trainer will contact you soon.",
     );
 
     form.reset();
@@ -100,250 +100,254 @@ export default function TrainerPublicContent({
 
   return (
     <div className="w-full">
-      <div className="mt-8">
+      <section className="mt-8">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {packages.map((pkg, index) => {
             const isSelected = selectedPackageId === String(pkg.id);
 
             return (
-              <div
+              <article
                 key={pkg.id}
-                className={`group flex min-h-[360px] flex-col rounded-3xl border p-5 transition ${
+                className={`flex min-h-[300px] flex-col rounded-3xl border p-5 transition ${
                   isSelected
-                    ? "border-blue-300 bg-blue-50 shadow-sm"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                    ? "border-blue-300 bg-blue-50"
+                    : "border-slate-200 bg-white hover:border-blue-200"
                 }`}
               >
-                <div className="flex h-full flex-col gap-4">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-black ${
-                          isSelected
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        Package {index + 1}
-                      </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span
+                    className={`rounded-full px-3 py-1 text-sm font-medium ${
+                      isSelected
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    Package {index + 1}
+                  </span>
 
-                      {isSelected && (
-                        <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-black text-white">
-                          Selected
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="mt-4 text-2xl font-black tracking-tight text-gray-950">
-                      {pkg.title}
-                    </h3>
-
-                    <p className="mt-2 leading-7 text-gray-600">
-                      {pkg.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-auto grid gap-3">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-500">
-                          Duration
-                        </p>
-
-                        <p className="mt-2 text-lg font-black text-gray-950">
-                          {pkg.duration}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-                          Price
-                        </p>
-
-                        <p className="mt-2 text-lg font-black text-gray-950">
-                          {pkg.price}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSelectPackage(pkg.id)}
-                      className={`rounded-2xl border px-5 py-4 font-black transition ${
-                        isSelected
-                          ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
-                          : "border-blue-200 bg-white text-blue-700 hover:border-blue-600 hover:bg-blue-50"
-                      }`}
-                    >
-                      {isSelected
-                        ? "Selected — Continue Below"
-                        : "Choose Package"}
-                    </button>
-                  </div>
+                  {isSelected && (
+                    <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-blue-700">
+                      Selected
+                    </span>
+                  )}
                 </div>
-              </div>
+
+                <h3 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                  {pkg.title}
+                </h3>
+
+                <p className="mt-3 leading-7 text-slate-600">
+                  {pkg.description}
+                </p>
+
+                <div className="mt-auto pt-6">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full border border-slate-200 bg-[oklch(98.4%_0.003_247.858)] px-4 py-2 text-sm font-medium text-slate-700">
+                      {pkg.duration}
+                    </span>
+
+                    <span className="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
+                      {pkg.price}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPackage(pkg.id)}
+                    className={`mt-5 w-full rounded-full px-5 py-3 text-base font-medium transition ${
+                      isSelected
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "border border-slate-300 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700"
+                    }`}
+                  >
+                    {isSelected ? "Selected" : "Choose package"}
+                  </button>
+                </div>
+              </article>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      <div
+      <section
         id="request"
         ref={formRef}
-        className="mt-8 rounded-3xl border border-gray-200 bg-white p-5 md:p-6"
+        className="mt-10 border-t border-slate-200 pt-10"
       >
-        <div className="flex flex-col gap-4 border-b border-gray-200 pb-6 md:flex-row md:items-start md:justify-between">
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-green-600">
-              Send request
+            <p className="text-base font-medium text-slate-500">
+              Coaching inquiry
             </p>
 
-            <h2 className="mt-2 text-3xl font-black tracking-tight">
-              Request coaching
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
+              Send your details
             </h2>
 
-            <p className="mt-2 max-w-2xl text-gray-600">
-              Send your details and the trainer will contact you with the next
-              steps.
+            <p className="mt-3 max-w-xl leading-7 text-slate-600">
+              Choose a package, share your goal, and the trainer will contact
+              you with next steps.
             </p>
-          </div>
 
-          {selectedPackage ? (
-            <div className="rounded-2xl bg-green-100 px-5 py-4 text-green-900">
-              <p className="text-xs font-black uppercase tracking-[0.2em]">
-                Selected
-              </p>
-              <p className="mt-1 font-black">{selectedPackage.title}</p>
-            </div>
-          ) : (
-            <div className="rounded-2xl bg-gray-100 px-5 py-4 text-gray-700">
-              <p className="text-xs font-black uppercase tracking-[0.2em]">
-                Step 1
-              </p>
-              <p className="mt-1 font-black">Choose a package</p>
-            </div>
-          )}
-        </div>
+            <div className="mt-6 rounded-3xl border border-slate-200 bg-[oklch(98.4%_0.003_247.858)] p-5">
+              {selectedPackage ? (
+                <>
+                  <p className="text-sm font-medium text-slate-500">
+                    Selected package
+                  </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
-          <div>
-            <label className="mb-2 block text-sm font-semibold">
-              Selected package
-            </label>
+                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-slate-950">
+                    {selectedPackage.title}
+                  </h3>
 
-            <select
-              name="package"
-              value={selectedPackageId}
-              onChange={(event) => {
-                setSelectedPackageId(event.target.value);
-                setFormStatus("");
-                setErrorMessage("");
-              }}
-              required
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-600"
-            >
-              <option value="">Choose a package</option>
+                  <p className="mt-2 text-slate-600">
+                    {selectedPackage.duration} · {selectedPackage.price}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-slate-500">
+                    Step one
+                  </p>
 
-              {packages.map((pkg) => (
-                <option key={pkg.id} value={String(pkg.id)}>
-                  {pkg.title} - {pkg.price}
-                </option>
-              ))}
-            </select>
+                  <h3 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-slate-950">
+                    Choose a package first
+                  </h3>
 
-            {selectedPackage && (
-              <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800">
-                You selected: {selectedPackage.title}
-              </p>
-            )}
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-semibold">
-                Full name
-              </label>
-
-              <input
-                name="name"
-                type="text"
-                required
-                placeholder="Enter your full name"
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold">Email</label>
-
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="Enter your email"
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
-              />
+                  <p className="mt-2 text-slate-600">
+                    Select one of the coaching packages above before submitting
+                    your inquiry.
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-semibold">Phone</label>
-
-              <input
-                name="phone"
-                type="tel"
-                placeholder="Enter your phone number"
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold">
-                Fitness goal
-              </label>
-
-              <input
-                name="fitnessGoal"
-                type="text"
-                required
-                placeholder="Lose weight, build muscle, improve fitness..."
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-semibold">Message</label>
-
-            <textarea
-              name="message"
-              rows={5}
-              placeholder="Tell the trainer more about what you need"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
-            />
-          </div>
-
-          <button
-            disabled={isSubmitting}
-            className="rounded-2xl bg-green-500 px-5 py-4 font-black text-gray-950 transition hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-70"
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-3xl border border-slate-200 bg-white p-6"
           >
-            {isSubmitting ? "Submitting..." : "Submit Coaching Request"}
-          </button>
+            <div className="grid gap-5">
+              <div>
+                <label className="mb-2 block text-base font-medium text-slate-800">
+                  Selected package
+                </label>
 
-          {formStatus && (
-            <p className="rounded-xl bg-green-100 px-4 py-3 text-sm font-medium text-green-800">
-              {formStatus}
-            </p>
-          )}
+                <select
+                  name="package"
+                  value={selectedPackageId}
+                  onChange={(event) => {
+                    setSelectedPackageId(event.target.value);
+                    setFormStatus("");
+                    setErrorMessage("");
+                  }}
+                  required
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                >
+                  <option value="">Choose a package</option>
 
-          {errorMessage && (
-            <p className="rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
-              {errorMessage}
-            </p>
-          )}
-        </form>
-      </div>
+                  {packages.map((pkg) => (
+                    <option key={pkg.id} value={String(pkg.id)}>
+                      {pkg.title} - {pkg.price}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    Full name
+                  </label>
+
+                  <input
+                    name="name"
+                    type="text"
+                    required
+                    placeholder="Your full name"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    Email
+                  </label>
+
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="you@email.com"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    Phone
+                  </label>
+
+                  <input
+                    name="phone"
+                    type="tel"
+                    placeholder="Your phone number"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    Fitness goal
+                  </label>
+
+                  <input
+                    name="fitnessGoal"
+                    type="text"
+                    required
+                    placeholder="Lose fat, build muscle..."
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-base font-medium text-slate-800">
+                  Message
+                </label>
+
+                <textarea
+                  name="message"
+                  rows={5}
+                  placeholder="Tell the trainer more about what you need"
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+
+              <button
+                disabled={isSubmitting}
+                className="rounded-full bg-blue-600 px-6 py-3.5 text-base font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isSubmitting ? "Submitting..." : "Submit inquiry"}
+              </button>
+
+              {formStatus && (
+                <p className="rounded-2xl bg-green-50 px-4 py-3 text-base font-medium text-green-800">
+                  {formStatus}
+                </p>
+              )}
+
+              {errorMessage && (
+                <p className="rounded-2xl bg-red-50 px-4 py-3 text-base font-medium text-red-800">
+                  {errorMessage}
+                </p>
+              )}
+            </div>
+          </form>
+        </div>
+      </section>
     </div>
   );
 }

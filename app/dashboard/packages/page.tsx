@@ -76,7 +76,9 @@ export default function PackagesPage() {
 
       const { data: packagesData, error: packagesError } = await supabase
         .from("packages")
-        .select("id, trainer_id, title, price, duration, description, is_active")
+        .select(
+          "id, trainer_id, title, price, duration, description, is_active",
+        )
         .eq("trainer_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -95,7 +97,7 @@ export default function PackagesPage() {
   }, []);
 
   function handleChange(
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
     const { name, value } = event.target;
 
@@ -140,7 +142,9 @@ export default function PackagesPage() {
         })
         .eq("id", editingId)
         .eq("trainer_id", profile.id)
-        .select("id, trainer_id, title, price, duration, description, is_active")
+        .select(
+          "id, trainer_id, title, price, duration, description, is_active",
+        )
         .single();
 
       if (error) {
@@ -151,8 +155,8 @@ export default function PackagesPage() {
 
       setPackages((currentPackages) =>
         currentPackages.map((pkg) =>
-          pkg.id === editingId ? (data as PackageItem) : pkg
-        )
+          pkg.id === editingId ? (data as PackageItem) : pkg,
+        ),
       );
 
       setStatus("Package updated successfully.");
@@ -219,7 +223,7 @@ export default function PackagesPage() {
     }
 
     setPackages((currentPackages) =>
-      currentPackages.filter((pkg) => pkg.id !== packageId)
+      currentPackages.filter((pkg) => pkg.id !== packageId),
     );
 
     if (editingId === packageId) {
@@ -255,8 +259,8 @@ export default function PackagesPage() {
 
     setPackages((currentPackages) =>
       currentPackages.map((pkg) =>
-        pkg.id === packageItem.id ? (data as PackageItem) : pkg
-      )
+        pkg.id === packageItem.id ? (data as PackageItem) : pkg,
+      ),
     );
 
     setStatus("Package visibility updated.");
@@ -266,9 +270,7 @@ export default function PackagesPage() {
     return (
       <DashboardLayout>
         <section className="w-full">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6">
-            <p className="font-semibold">Loading packages...</p>
-          </div>
+          <div className="h-32" />
         </section>
       </DashboardLayout>
     );
@@ -316,68 +318,97 @@ export default function PackagesPage() {
   return (
     <DashboardLayout publicPageUrl={publicPageUrl}>
       <section className="w-full">
-        <div className="rounded-3xl bg-gray-950 p-6 text-white">
-          <p className="text-sm font-semibold text-gray-300">
-            Trainer Packages
-          </p>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-base font-medium text-slate-500">Packages</p>
 
-          <h1 className="mt-1 text-3xl font-bold">Manage Packages</h1>
+            <h1 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-slate-950 md:text-5xl">
+              Manage offers
+            </h1>
 
-          <p className="mt-2 max-w-2xl text-gray-300">
-            Add, edit, delete, or hide packages from your public FitLink page.
-          </p>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+              Create simple coaching packages clients can choose from when they
+              visit your profile.
+            </p>
+          </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
-            <span className="rounded-full bg-green-400/15 px-4 py-2 text-sm font-bold text-green-200">
-              {activePackagesCount} Active
-            </span>
+          <Link
+            href={publicPageUrl}
+            className="inline-flex w-fit rounded-full border border-slate-300 bg-white px-5 py-3 text-base font-medium text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+          >
+            View Profile
+          </Link>
+        </div>
 
-            <span className="rounded-full bg-gray-400/15 px-4 py-2 text-sm font-bold text-gray-200">
-              {hiddenPackagesCount} Hidden
-            </span>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <p className="text-base font-medium text-slate-500">Total</p>
 
-            {editingId && (
-              <span className="rounded-full bg-blue-400/15 px-4 py-2 text-sm font-bold text-blue-200">
-                Editing package
-              </span>
-            )}
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-950">
+              {packages.length}
+            </h2>
+
+            <p className="mt-3 leading-7 text-slate-600">
+              Coaching packages created.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <p className="text-base font-medium text-slate-500">Active</p>
+
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-green-700">
+              {activePackagesCount}
+            </h2>
+
+            <p className="mt-3 leading-7 text-slate-600">
+              Visible on your public profile.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <p className="text-base font-medium text-slate-500">Hidden</p>
+
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-700">
+              {hiddenPackagesCount}
+            </h2>
+
+            <p className="mt-3 leading-7 text-slate-600">
+              Saved but not shown to clients.
+            </p>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+        <div className="mt-8 grid gap-8 xl:grid-cols-[0.85fr_1.15fr]">
           <form
             onSubmit={handleSubmit}
-            className={`rounded-3xl border p-6 ${
+            className={`h-fit rounded-3xl border p-6 ${
               editingId
                 ? "border-blue-200 bg-blue-50"
-                : "border-gray-200 bg-white"
+                : "border-slate-200 bg-white"
             }`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p
-                  className={`text-sm font-bold ${
-                    editingId ? "text-blue-700" : "text-gray-500"
-                  }`}
-                >
-                  {editingId ? "Edit mode" : "New package"}
-                </p>
+            <div className="border-b border-slate-200 pb-6">
+              <p
+                className={`text-base font-medium ${
+                  editingId ? "text-blue-700" : "text-slate-500"
+                }`}
+              >
+                {editingId ? "Editing package" : "New package"}
+              </p>
 
-                <h2 className="mt-1 text-2xl font-bold">
-                  {editingId ? "Edit Package" : "Add New Package"}
-                </h2>
-              </div>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                {editingId ? "Update this package" : "Add a package"}
+              </h2>
 
-              {editingId && (
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
-                  Editing
-                </span>
-              )}
+              <p className="mt-3 leading-7 text-slate-600">
+                Keep the offer simple, clear, and easy for clients to
+                understand.
+              </p>
             </div>
 
-            <div className="mt-5 grid gap-4">
+            <div className="mt-6 grid gap-5">
               <div>
-                <label className="mb-2 block text-sm font-semibold">
+                <label className="mb-2 block text-base font-medium text-slate-800">
                   Package title
                 </label>
 
@@ -388,13 +419,13 @@ export default function PackagesPage() {
                   type="text"
                   required
                   placeholder="8-Week Transformation"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold">
+                  <label className="mb-2 block text-base font-medium text-slate-800">
                     Price
                   </label>
 
@@ -405,12 +436,12 @@ export default function PackagesPage() {
                     type="text"
                     required
                     placeholder="$199"
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold">
+                  <label className="mb-2 block text-base font-medium text-slate-800">
                     Duration
                   </label>
 
@@ -421,13 +452,13 @@ export default function PackagesPage() {
                     type="text"
                     required
                     placeholder="8 weeks"
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold">
+                <label className="mb-2 block text-base font-medium text-slate-800">
                   Description
                 </label>
 
@@ -438,18 +469,12 @@ export default function PackagesPage() {
                   rows={5}
                   required
                   placeholder="Describe what is included in this package."
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  className={`rounded-xl px-5 py-3 font-semibold text-white transition ${
-                    editingId
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "bg-gray-950 hover:bg-gray-800"
-                  }`}
-                >
+                <button className="rounded-full bg-blue-600 px-6 py-3.5 text-base font-medium text-white transition hover:bg-blue-700">
                   {editingId ? "Save Changes" : "Add Package"}
                 </button>
 
@@ -457,7 +482,7 @@ export default function PackagesPage() {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition hover:bg-blue-50"
+                    className="rounded-full border border-slate-300 bg-white px-6 py-3.5 text-base font-medium text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
                   >
                     Cancel Edit
                   </button>
@@ -466,14 +491,14 @@ export default function PackagesPage() {
 
               {status && (
                 <p
-                  className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                  className={`rounded-2xl px-4 py-3 text-base font-medium ${
                     status.toLowerCase().includes("delete")
-                      ? "bg-red-100 text-red-800"
+                      ? "bg-red-50 text-red-800"
                       : status.toLowerCase().includes("saving") ||
-                        status.toLowerCase().includes("adding") ||
-                        status.toLowerCase().includes("updating")
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-green-100 text-green-800"
+                          status.toLowerCase().includes("adding") ||
+                          status.toLowerCase().includes("updating")
+                        ? "bg-blue-50 text-blue-800"
+                        : "bg-green-50 text-green-800"
                   }`}
                 >
                   {status}
@@ -481,33 +506,38 @@ export default function PackagesPage() {
               )}
 
               {errorMessage && (
-                <p className="rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
+                <p className="rounded-2xl bg-red-50 px-4 py-3 text-base font-medium text-red-800">
                   {errorMessage}
                 </p>
               )}
             </div>
           </form>
 
-          <div className="rounded-3xl border border-gray-200 bg-white p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-6">
               <div>
-                <p className="text-sm font-bold text-gray-500">
+                <p className="text-base font-medium text-slate-500">
                   Package library
                 </p>
 
-                <h2 className="mt-1 text-2xl font-bold">Your Packages</h2>
+                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                  Your packages
+                </h2>
               </div>
 
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+              <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
                 {packages.length} Total
               </span>
             </div>
 
-            <div className="mt-5 grid gap-4">
+            <div className="mt-6 grid gap-4">
               {packages.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-gray-300 p-8 text-center">
-                  <p className="font-semibold">No packages yet</p>
-                  <p className="mt-1 text-sm text-gray-600">
+                <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center">
+                  <p className="text-xl font-semibold tracking-[-0.02em] text-slate-950">
+                    No packages yet
+                  </p>
+
+                  <p className="mt-2 leading-7 text-slate-600">
                     Add your first coaching package using the form.
                   </p>
                 </div>
@@ -518,37 +548,39 @@ export default function PackagesPage() {
                   return (
                     <div
                       key={pkg.id}
-                      className={`rounded-2xl border p-5 transition ${
+                      className={`rounded-3xl border p-5 transition ${
                         isEditingThisPackage
                           ? "border-blue-300 bg-blue-50"
                           : pkg.is_active
-                          ? "border-green-200 bg-white"
-                          : "border-gray-200 bg-gray-50 opacity-80"
+                            ? "border-slate-200 bg-white"
+                            : "border-slate-200 bg-slate-50 opacity-80"
                       }`}
                     >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-bold">{pkg.title}</h3>
+                            <h3 className="text-xl font-semibold tracking-[-0.02em] text-slate-950">
+                              {pkg.title}
+                            </h3>
 
                             <span
-                              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                              className={`rounded-full px-3 py-1 text-sm font-medium ${
                                 pkg.is_active
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-200 text-gray-700"
+                                  ? "bg-green-50 text-green-700"
+                                  : "bg-slate-100 text-slate-600"
                               }`}
                             >
                               {pkg.is_active ? "Active" : "Hidden"}
                             </span>
 
                             {isEditingThisPackage && (
-                              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                              <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
                                 Editing
                               </span>
                             )}
                           </div>
 
-                          <p className="mt-1 text-sm text-gray-500">
+                          <p className="mt-2 text-base text-slate-500">
                             {pkg.duration} · {pkg.price}
                           </p>
                         </div>
@@ -556,9 +588,9 @@ export default function PackagesPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleActive(pkg)}
-                          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                          className={`rounded-full px-5 py-2.5 text-sm font-medium transition ${
                             pkg.is_active
-                              ? "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                              ? "border border-slate-300 bg-white text-slate-700 hover:border-slate-400"
                               : "bg-green-600 text-white hover:bg-green-700"
                           }`}
                         >
@@ -566,15 +598,15 @@ export default function PackagesPage() {
                         </button>
                       </div>
 
-                      <p className="mt-3 leading-6 text-gray-600">
+                      <p className="mt-4 leading-7 text-slate-600">
                         {pkg.description}
                       </p>
 
-                      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
                         <button
                           type="button"
                           onClick={() => handleEdit(pkg)}
-                          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                          className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
                         >
                           Edit
                         </button>
@@ -582,7 +614,7 @@ export default function PackagesPage() {
                         <button
                           type="button"
                           onClick={() => handleDelete(pkg.id)}
-                          className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+                          className="rounded-full border border-red-200 bg-white px-5 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
                         >
                           Delete
                         </button>

@@ -12,7 +12,7 @@ type DashboardLayoutProps = {
 
 const navItems = [
   {
-    label: "Dashboard",
+    label: "Overview",
     href: "/dashboard",
   },
   {
@@ -24,7 +24,7 @@ const navItems = [
     href: "/dashboard/packages",
   },
   {
-    label: "Requests",
+    label: "Leads",
     href: "/dashboard/requests",
   },
   {
@@ -44,15 +44,80 @@ export default function DashboardLayout({
     window.location.href = "/login";
   }
 
-  return (
-    <main className="min-h-screen bg-white text-gray-950">
-      <div className="flex min-h-screen w-full gap-4 p-3 lg:p-4">
-        <aside className="hidden w-[260px] shrink-0 rounded-[1.75rem] bg-gray-950 p-5 text-white lg:flex lg:flex-col">
-          <div className="rounded-2xl bg-white p-4">
+return (
+  <main className="min-h-screen bg-[oklch(98.4%_0.003_247.858)] text-slate-950">
+    <div className="flex min-h-screen w-full">
+      <aside className="hidden w-[272px] shrink-0 border-r border-slate-200 bg-white px-6 py-7 lg:flex lg:flex-col">
+        <div className="mb-10">
+          <FitLinkLogo href="/dashboard" />
+        </div>
+
+        <nav className="grid gap-1.5">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-xl px-4 py-3.5 text-base font-medium tracking-[-0.01em] transition ${
+                  isActive
+                    ? "bg-blue-50 text-blue-700 shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="mt-8 grid gap-2 border-t border-slate-200 pt-5">
+          {publicPageUrl && (
+            <Link
+              href={publicPageUrl}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base font-medium tracking-[-0.01em] text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+            >
+              View Profile
+            </Link>
+          )}
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-xl px-4 py-3.5 text-left text-base font-medium tracking-[-0.01em] text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
+          >
+            Log out
+          </button>
+        </div>
+
+        <div className="mt-auto border-t border-slate-200 pt-5">
+          <p className="text-base font-semibold tracking-[-0.01em] text-slate-950">
+            Train. Connect. Grow.
+          </p>
+
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Manage your coaching profile, packages, and leads in one simple
+            place.
+          </p>
+        </div>
+      </aside>
+
+      <section className="min-w-0 flex-1">
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-[oklch(98.4%_0.003_247.858)]/90 px-4 py-4 backdrop-blur lg:hidden">
+          <div className="flex items-center justify-between gap-3">
             <FitLinkLogo href="/dashboard" />
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-base font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-950"
+            >
+              Log out
+            </button>
           </div>
 
-          <nav className="mt-6 grid gap-2">
+          <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
 
@@ -60,96 +125,33 @@ export default function DashboardLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`rounded-2xl px-4 py-3 text-sm font-bold transition ${
+                  className={`shrink-0 rounded-full px-4 py-2.5 text-base font-medium tracking-[-0.01em] transition ${
                     isActive
-                      ? "bg-white text-gray-950"
-                      : "text-gray-300 hover:bg-white/10 hover:text-white"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-950"
                   }`}
                 >
                   {item.label}
                 </Link>
               );
             })}
-          </nav>
 
-          <div className="mt-6 grid gap-2">
             {publicPageUrl && (
               <Link
                 href={publicPageUrl}
-                className="rounded-2xl border border-blue-400/30 bg-blue-400/10 px-4 py-3 text-sm font-bold text-blue-100 transition hover:bg-blue-400/20"
+                className="shrink-0 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-base font-medium text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
               >
-                View Public Page
+                View Profile
               </Link>
             )}
+          </nav>
+        </header>
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-2xl border border-green-400/30 bg-green-400/10 px-4 py-3 text-left text-sm font-bold text-green-100 transition hover:bg-green-400/20"
-            >
-              Log Out
-            </button>
-          </div>
-
-          <div className="mt-auto rounded-2xl bg-white/10 p-4">
-            <p className="text-sm font-black text-white">
-              Train. Connect. Grow.
-            </p>
-            <p className="mt-1 text-xs leading-5 text-gray-300">
-              Manage your profile, packages, and requests from one place.
-            </p>
-          </div>
-        </aside>
-
-        <section className="min-w-0 flex-1 bg-white p-2 md:p-4">
-          <div className="mb-4 rounded-[1.5rem] bg-gray-950 p-4 text-white lg:hidden">
-            <div className="rounded-2xl bg-white p-3">
-              <FitLinkLogo href="/dashboard" />
-            </div>
-
-            <nav className="mt-4 grid grid-cols-2 gap-2">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`rounded-2xl px-3 py-3 text-center text-sm font-bold transition ${
-                      isActive
-                        ? "bg-white text-gray-950"
-                        : "bg-white/10 text-gray-200 hover:bg-white/15 hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="mt-3 grid gap-2">
-              {publicPageUrl && (
-                <Link
-                  href={publicPageUrl}
-                  className="rounded-2xl border border-blue-400/30 bg-blue-400/10 px-3 py-3 text-center text-sm font-bold text-blue-100 transition hover:bg-blue-400/20"
-                >
-                  View Public Page
-                </Link>
-              )}
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-2xl border border-green-400/30 bg-green-400/10 px-3 py-3 text-sm font-bold text-green-100 transition hover:bg-green-400/20"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-
+        <div className="px-4 py-5 sm:px-6 lg:px-10 lg:py-9">
           {children}
-        </section>
-      </div>
-    </main>
-  );
+        </div>
+      </section>
+    </div>
+  </main>
+);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -31,54 +31,56 @@ export default function EditProfilePage() {
   const [status, setStatus] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    async function loadProfile() {
-      setLoading(true);
-      setErrorMessage("");
+  const loadProfile = useCallback(async () => {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+    setErrorMessage("");
 
-      if (userError) {
-        setErrorMessage(userError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      // Load everything the trainer can edit on their public page.
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(
-          "id, full_name, username, specialty, bio, instagram, tiktok, whatsapp, phone, contact_email, image_url",
-        )
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        setErrorMessage(error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!data) {
-        setErrorMessage("No trainer profile found for this account.");
-        setLoading(false);
-        return;
-      }
-
-      setProfile(data as TrainerProfile);
+    if (userError) {
+      setErrorMessage(userError.message);
       setLoading(false);
+      return;
     }
 
-    loadProfile();
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(
+        "id, full_name, username, specialty, bio, instagram, tiktok, whatsapp, phone, contact_email, image_url",
+      )
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      setErrorMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!data) {
+      setErrorMessage("No trainer profile found for this account.");
+      setLoading(false);
+      return;
+    }
+
+    setProfile(data as TrainerProfile);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      loadProfile();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [loadProfile]);
 
   function handleChange(
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -271,9 +273,7 @@ export default function EditProfilePage() {
     return (
       <DashboardLayout>
         <section className="w-full">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6">
-            <p className="font-semibold">Loading profile...</p>
-          </div>
+          <div className="h-32" />
         </section>
       </DashboardLayout>
     );
@@ -283,15 +283,20 @@ export default function EditProfilePage() {
     return (
       <DashboardLayout>
         <section className="w-full">
-          <div className="rounded-3xl bg-red-100 p-6 text-red-800">
-            <h1 className="text-xl font-bold">Profile error</h1>
-            <p className="mt-2">{errorMessage}</p>
+          <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800">
+            <p className="text-sm font-medium">Profile error</p>
+
+            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.02em]">
+              Something needs attention
+            </h1>
+
+            <p className="mt-3 max-w-2xl leading-7">{errorMessage}</p>
 
             <Link
               href="/dashboard"
-              className="mt-4 inline-block rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white"
+              className="mt-5 inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
             >
-              Back to Dashboard
+              Back to Overview
             </Link>
           </div>
         </section>
@@ -303,9 +308,12 @@ export default function EditProfilePage() {
     return (
       <DashboardLayout>
         <section className="w-full">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6">
-            <h1 className="text-xl font-bold">No profile found</h1>
-            <p className="mt-2 text-gray-600">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+              No profile found
+            </h1>
+
+            <p className="mt-2 text-slate-600">
               Your profile has not loaded yet.
             </p>
           </div>
@@ -320,52 +328,94 @@ export default function EditProfilePage() {
   return (
     <DashboardLayout publicPageUrl={publicPageUrl}>
       <section className="w-full">
-        <div className="rounded-3xl bg-gray-950 p-6 text-white">
-          <p className="text-sm font-semibold text-gray-300">Trainer Profile</p>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-base font-medium text-slate-500">Profile</p>
 
-          <h1 className="mt-1 text-3xl font-bold">Edit Profile</h1>
+            <h1 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-slate-950 md:text-5xl">
+              Edit profile
+            </h1>
 
-          <p className="mt-2 max-w-2xl text-gray-300">
-            Update the information clients see on your public FitLink page.
-          </p>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+              This is the information clients see when they open your FitLink.
+            </p>
+          </div>
+
+          <Link
+            href={publicPageUrl}
+            className="inline-flex w-fit rounded-full border border-slate-300 bg-white px-5 py-3 text-base font-medium text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+          >
+            View Profile
+          </Link>
         </div>
 
-        <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-6">
-          <div className="grid gap-8 xl:grid-cols-[260px_1fr]">
-            <div>
-              <div className="relative h-44 w-44 overflow-hidden rounded-3xl bg-gray-100">
-                <Image
-                  src={profileImage}
-                  alt={profile.full_name || "Trainer profile"}
-                  fill
-                  priority
-                  unoptimized
-                  className="object-cover"
-                />
-              </div>
-
-              <div className="mt-5">
-                <label className="mb-2 block text-sm font-semibold">
-                  Upload profile image
-                </label>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
-                  className="block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-gray-950 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-gray-800 disabled:opacity-60"
-                />
-
-                <p className="mt-2 text-xs text-gray-500">
-                  JPG, PNG, or WebP. Max size 5MB.
-                </p>
-              </div>
+        <div className="mt-8 grid gap-8 xl:grid-cols-[320px_1fr]">
+          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-6">
+            <div className="relative h-56 w-full overflow-hidden rounded-3xl bg-slate-100">
+              <Image
+                src={profileImage}
+                alt={profile.full_name || "Trainer profile"}
+                fill
+                priority
+                unoptimized
+                className="object-cover"
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="mt-5">
+              <p className="text-xl font-semibold tracking-[-0.02em] text-slate-950">
+                {profile.full_name || "Your name"}
+              </p>
+
+              <p className="mt-1 text-base text-slate-500">
+                {profile.specialty || "Your coaching specialty"}
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <label className="mb-2 block text-base font-medium text-slate-800">
+                Upload profile image
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploadingImage}
+                className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2.5 file:font-medium file:text-white hover:file:bg-blue-700 disabled:opacity-60"
+              />
+
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                JPG, PNG, or WebP. Max size 5MB.
+              </p>
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-[oklch(98.4%_0.003_247.858)] p-4">
+              <p className="text-sm font-medium text-slate-500">Your link</p>
+
+              <p className="mt-1 break-all text-base font-medium text-slate-800">
+                /trainer/{profile.username || "your-username"}
+              </p>
+            </div>
+          </aside>
+
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-3xl border border-slate-200 bg-white p-6"
+          >
+            <div className="border-b border-slate-200 pb-6">
+              <p className="text-base font-medium text-slate-500">
+                Basic information
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                Your public identity
+              </h2>
+            </div>
+
+            <div className="mt-6 grid gap-5">
               <div>
-                <label className="mb-2 block text-sm font-semibold">
+                <label className="mb-2 block text-base font-medium text-slate-800">
                   Profile image URL
                 </label>
 
@@ -375,13 +425,13 @@ export default function EditProfilePage() {
                   onChange={handleChange}
                   type="url"
                   placeholder="https://example.com/image.jpg"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold">
+                  <label className="mb-2 block text-base font-medium text-slate-800">
                     Full name
                   </label>
 
@@ -391,12 +441,12 @@ export default function EditProfilePage() {
                     onChange={handleChange}
                     type="text"
                     required
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold">
+                  <label className="mb-2 block text-base font-medium text-slate-800">
                     Username
                   </label>
 
@@ -406,22 +456,17 @@ export default function EditProfilePage() {
                     onChange={handleChange}
                     type="text"
                     required
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   />
 
-                  <p className="mt-1 text-xs text-gray-500">
-                    Your link: /trainer/{profile.username || "your-username"}
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Use lowercase letters, numbers, and hyphens only. Example:
-                    abdalla-fitness
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Use lowercase letters, numbers, hyphens, and underscores.
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold">
+                <label className="mb-2 block text-base font-medium text-slate-800">
                   Specialty
                 </label>
 
@@ -432,12 +477,14 @@ export default function EditProfilePage() {
                   type="text"
                   required
                   placeholder="Fat Loss & Strength Coaching"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold">Bio</label>
+                <label className="mb-2 block text-base font-medium text-slate-800">
+                  Bio
+                </label>
 
                 <textarea
                   name="bio"
@@ -446,130 +493,141 @@ export default function EditProfilePage() {
                   rows={5}
                   required
                   placeholder="Tell clients who you help and how you help them."
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-950"
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
+            </div>
 
-              <div className="rounded-3xl border border-gray-200 bg-gray-50 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
-                      Social links
-                    </p>
-                    <h2 className="mt-1 text-xl font-bold">
-                      Public contact buttons
-                    </h2>
-                  </div>
+            <div className="mt-8 border-t border-slate-200 pt-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-base font-medium text-slate-500">
+                    Contact buttons
+                  </p>
 
-                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
-                    Optional
-                  </span>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                    Social and contact details
+                  </h2>
+
+                  <p className="mt-3 max-w-2xl leading-7 text-slate-600">
+                    These can appear on your public profile so clients can reach
+                    you easily.
+                  </p>
                 </div>
 
-                <p className="mt-2 text-sm text-gray-600">
-                  These links appear as buttons on your public trainer page.
-                </p>
-
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Instagram
-                    </label>
-
-                    <input
-                      name="instagram"
-                      value={profile.instagram || ""}
-                      onChange={handleChange}
-                      type="text"
-                      placeholder="@username"
-                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      TikTok
-                    </label>
-
-                    <input
-                      name="tiktok"
-                      value={profile.tiktok || ""}
-                      onChange={handleChange}
-                      type="text"
-                      placeholder="@username"
-                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      WhatsApp
-                    </label>
-
-                    <input
-                      name="whatsapp"
-                      value={profile.whatsapp || ""}
-                      onChange={handleChange}
-                      type="tel"
-                      placeholder="+16470000000"
-                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
-                    />
-
-                    <p className="mt-1 text-xs text-gray-500">
-                      Use country code, for example +16470000000.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Phone
-                    </label>
-
-                    <input
-                      name="phone"
-                      value={profile.phone || ""}
-                      onChange={handleChange}
-                      type="tel"
-                      placeholder="+1 647 000 0000"
-                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold">
-                      Contact email
-                    </label>
-
-                    <input
-                      name="contact_email"
-                      value={profile.contact_email || ""}
-                      onChange={handleChange}
-                      type="email"
-                      required
-                      placeholder="trainer@email.com"
-                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-950"
-                    />
-                  </div>
-                </div>
+                <span className="rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
+                  Optional
+                </span>
               </div>
 
-              <button className="rounded-xl bg-gray-950 px-5 py-3 font-semibold text-white transition hover:bg-gray-800">
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    Instagram
+                  </label>
+
+                  <input
+                    name="instagram"
+                    value={profile.instagram || ""}
+                    onChange={handleChange}
+                    type="text"
+                    placeholder="@username"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    TikTok
+                  </label>
+
+                  <input
+                    name="tiktok"
+                    value={profile.tiktok || ""}
+                    onChange={handleChange}
+                    type="text"
+                    placeholder="@username"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    WhatsApp
+                  </label>
+
+                  <input
+                    name="whatsapp"
+                    value={profile.whatsapp || ""}
+                    onChange={handleChange}
+                    type="tel"
+                    placeholder="+16470000000"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Use country code, for example +16470000000.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    Phone
+                  </label>
+
+                  <input
+                    name="phone"
+                    value={profile.phone || ""}
+                    onChange={handleChange}
+                    type="tel"
+                    placeholder="+1 647 000 0000"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-base font-medium text-slate-800">
+                    Contact email
+                  </label>
+
+                  <input
+                    name="contact_email"
+                    value={profile.contact_email || ""}
+                    onChange={handleChange}
+                    type="email"
+                    required
+                    placeholder="trainer@email.com"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <button className="rounded-full bg-blue-600 px-6 py-3.5 text-base font-medium text-white transition hover:bg-blue-700">
                 Save Profile
               </button>
 
-              {status && (
-                <p className="rounded-xl bg-green-100 px-4 py-3 text-sm font-medium text-green-800">
-                  {status}
-                </p>
-              )}
+              <Link
+                href={publicPageUrl}
+                className="rounded-full border border-slate-300 bg-white px-6 py-3.5 text-center text-base font-medium text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+              >
+                Preview Profile
+              </Link>
+            </div>
 
-              {errorMessage && (
-                <p className="rounded-xl bg-red-100 px-4 py-3 text-sm font-medium text-red-800">
-                  {errorMessage}
-                </p>
-              )}
-            </form>
-          </div>
+            {status && (
+              <p className="mt-5 rounded-2xl bg-green-50 px-4 py-3 text-base font-medium text-green-800">
+                {status}
+              </p>
+            )}
+
+            {errorMessage && (
+              <p className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-base font-medium text-red-800">
+                {errorMessage}
+              </p>
+            )}
+          </form>
         </div>
       </section>
     </DashboardLayout>
