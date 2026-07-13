@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
@@ -19,20 +19,6 @@ type PackageSummary = {
   duration: string;
 };
 
-type ClientRequest = {
-  id: string;
-  trainer_id: string;
-  package_id: string | null;
-  client_name: string;
-  client_email: string;
-  client_phone: string | null;
-  fitness_goal: string;
-  message: string | null;
-  status: RequestStatus;
-  created_at: string;
-  package: PackageSummary | null;
-};
-
 type ClientRequestRow = {
   id: string;
   trainer_id: string;
@@ -44,6 +30,10 @@ type ClientRequestRow = {
   message: string | null;
   status: RequestStatus;
   created_at: string;
+};
+
+type ClientRequest = ClientRequestRow & {
+  package: PackageSummary | null;
 };
 
 function getStatusBadgeClass(status: RequestStatus) {
@@ -89,18 +79,13 @@ export default function ClientRequestsPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    loadRequestsPage();
-  }, []);
-
-  async function loadRequestsPage() {
-    setLoading(true);
-    setErrorMessage("");
-
+  const loadRequestsPage = useCallback(async () => {
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
+
+    setErrorMessage("");
 
     if (userError) {
       setErrorMessage(userError.message);
@@ -196,7 +181,15 @@ export default function ClientRequestsPage() {
     setProfile(profileData as TrainerProfile);
     setRequests(requestsWithPackages);
     setLoading(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      loadRequestsPage();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [loadRequestsPage]);
 
   async function handleStatusChange(
     requestId: string,
@@ -456,8 +449,7 @@ export default function ClientRequestsPage() {
                           </p>
 
                           <p className="mt-1 text-sm font-semibold text-gray-600">
-                            {request.package.duration} •{" "}
-                            {request.package.price}
+                            {request.package.duration} • {request.package.price}
                           </p>
                         </div>
                       ) : (
